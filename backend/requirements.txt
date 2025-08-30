@@ -1,4 +1,6 @@
+bcrypt
 flask
-pyjwt
 psycopg2
+pydantic
+pyjwt
 sqlalchemy
