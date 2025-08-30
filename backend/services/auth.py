@@ -11,7 +11,7 @@ class AuthService:
     def register(self, username: str, email: str, password: str):
         password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-        user = User(generate_id('USER_'), username, email, password_hash)
+        user = User(generate_id('USER_'), username, email, password_hash.decode('utf-8'))
         
         session = Database().get_session()
         with session() as session:

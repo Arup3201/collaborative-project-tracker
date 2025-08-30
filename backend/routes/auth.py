@@ -8,14 +8,11 @@ from validation.payload import UserCreatePayload
 auth_blueprint = Blueprint("auth", __name__)
 
 def register():
-    user_data: UserCreatePayload = json.load(request.get_json())
+    user_data = UserCreatePayload(**request.get_json())
 
-    try:
-        AuthService().register(username=user_data.username, email=user_data.email, password=user_data.password)
-        return make_response({
-            "message": "user created"
-        }, 201)
-    except:
-        return make_response("SERVER_ERROR", 500)
+    AuthService().register(username=user_data.username, email=user_data.email, password=user_data.password)
+    return make_response({
+        "message": "user created"
+    }, 201)
 
 auth_blueprint.add_url_rule("/register", endpoint="register", view_func=register, methods=['POST'])
