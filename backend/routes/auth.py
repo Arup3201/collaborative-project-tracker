@@ -3,9 +3,9 @@ from flask import Blueprint, request, make_response
 
 from services.auth import AuthService
 
-from pydantic.payload import UserCreatePayload
+from validation.payload import UserCreatePayload
 
-auth_blueprint = Blueprint(__name__, "auth")
+auth_blueprint = Blueprint("auth", __name__)
 
 def register():
     user_data: UserCreatePayload = json.load(request.get_json())
@@ -18,4 +18,4 @@ def register():
     except:
         return make_response("SERVER_ERROR", 500)
 
-auth_blueprint.add_url_rule("/register", endpoint="register", view_func=register, method=['POST'])
+auth_blueprint.add_url_rule("/register", endpoint="register", view_func=register, methods=['POST'])
