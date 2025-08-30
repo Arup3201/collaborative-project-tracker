@@ -6,10 +6,10 @@ from . import Base, Mapped, mapped_column, String, DateTime
 class User(Base):
     __tablename__ = 'users'
 
-    id: Mapped[str] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(50))
-    email: Mapped[str] = mapped_column(String(150))
-    password_hash: Mapped[str] = mapped_column(String(150))
+    id: Mapped[str] = mapped_column(String(150), primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    email: Mapped[str] = mapped_column(String(150), nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(150), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime)
 
     def __init__(self, id, name, email, password_hash):
