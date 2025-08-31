@@ -9,7 +9,7 @@ auth_blueprint = Blueprint("auth", __name__)
 KEYCLOAK_SERVER_URL = "http://localhost:8080/"
 KEYCLOAK_REALM = "collab"
 KEYCLOAK_CLIENT_ID = "arup"
-KEYCLOAK_CLIENT_SECRET = Env.SECRET_KEY
+KEYCLOAK_CLIENT_SECRET = Env.KEYCLOAK_SECRET_KEY
 REDIRECT_URI = "http://localhost:8000/api/v1/auth/callback"
 
 
@@ -22,11 +22,9 @@ keycloak_openid = KeycloakOpenID(server_url=KEYCLOAK_SERVER_URL,
 # Admin client for user management
 keycloak_admin = KeycloakAdmin(
     server_url=KEYCLOAK_SERVER_URL,
-    username="admin", 
-    password="admin", 
-    realm_name=KEYCLOAK_REALM,
     client_id=KEYCLOAK_CLIENT_ID,
-    client_secret_key=KEYCLOAK_CLIENT_SECRET
+    client_secret_key=KEYCLOAK_CLIENT_SECRET,
+    realm_name=KEYCLOAK_REALM
 )
 
 
