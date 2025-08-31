@@ -1,4 +1,4 @@
-from keycloak import KeycloakOpenID
+from keycloak import KeycloakOpenID, KeycloakAdmin
 from flask import Blueprint, redirect, request, jsonify
 
 from services.auth import AuthService
@@ -21,6 +21,17 @@ keycloak_openid = KeycloakOpenID(server_url=KEYCLOAK_SERVER_URL,
                                  client_id=KEYCLOAK_CLIENT_ID,
                                  realm_name=KEYCLOAK_REALM,
                                  client_secret_key=KEYCLOAK_CLIENT_SECRET)
+
+# Admin client for user management (optional)
+keycloak_admin = KeycloakAdmin(
+    server_url=KEYCLOAK_SERVER_URL,
+    username="admin", 
+    password="admin", 
+    realm_name=KEYCLOAK_REALM,
+    client_id=KEYCLOAK_CLIENT_ID,
+    client_secret_key=KEYCLOAK_CLIENT_SECRET
+)
+
 
 def exchange_code_for_token(code):
     """Exchange authorization code for access token"""
@@ -48,6 +59,54 @@ def verify_token(token):
     except Exception as e:
         print(f"Token verification error: {e}")
         return None
+
+def register_user(username, email, password, first_name=None, last_name=None):
+        """Register a new user directly through Keycloak Admin API"""
+        try:
+            user_data = {
+                "username": username,
+                "email": email,
+                "enabled": True,
+                "emailVerified": False,
+                "firstName": first_name or "",
+                "lastName": last_name or "",
+                "credentials": [{
+                    "type": "password",
+                    "value": password,
+                    "temporary": False
+                }]
+            }
+            
+            user_id = keycloak_admin.create_user(user_data)
+            return {"success": True, "user_id": user_id}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+def register():
+    """Direct user registration through Keycloak Admin API"""
+    data = request.get_json()
+    
+    required_fields = ['username', 'email', 'password']
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields: username, email, password'}), 400
+    
+    
+    result = register_user(
+        username=data['username'],
+        email=data['email'],
+        password=data['password'],
+        first_name=data.get('first_name'),
+        last_name=data.get('last_name')
+    )
+    
+    if result['success']:
+        return jsonify({
+            'message': 'User registered successfully',
+            'user_id': result['user_id'],
+            'next_step': 'Please login using /login endpoint'
+        }), 201
+    else:
+        return jsonify({'error': f'Registration failed: {result["error"]}'}), 400
 
 def login():
     auth_url = keycloak_openid.auth_url(redirect_uri=REDIRECT_URI,
@@ -86,5 +145,6 @@ def callback():
         return jsonify({'error': 'Failed to get user information'}), 400
 
 
+auth_blueprint.add_url_rule("/register", endpoint="register", view_func=register, methods=['POST'])
 auth_blueprint.add_url_rule("/login", endpoint="login", view_func=login, methods=['POST'])
 auth_blueprint.add_url_rule("/callback", endpoint="callback", view_func=callback, methods=['POST'])
