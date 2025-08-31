@@ -1,10 +1,7 @@
 from keycloak import KeycloakOpenID, KeycloakAdmin
 from flask import Blueprint, redirect, request, jsonify
 
-from services.auth import AuthService
 from config import Env
-
-from validation.payload import UserCreatePayload, UserLoginPayload
 
 auth_blueprint = Blueprint("auth", __name__)
 
@@ -22,7 +19,7 @@ keycloak_openid = KeycloakOpenID(server_url=KEYCLOAK_SERVER_URL,
                                  realm_name=KEYCLOAK_REALM,
                                  client_secret_key=KEYCLOAK_CLIENT_SECRET)
 
-# Admin client for user management (optional)
+# Admin client for user management
 keycloak_admin = KeycloakAdmin(
     server_url=KEYCLOAK_SERVER_URL,
     username="admin", 
