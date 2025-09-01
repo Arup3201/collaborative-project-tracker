@@ -1,7 +1,7 @@
 import os
 
-def load_dotenv():
-    with open(".env") as file:
+def load_dotenv(filename=".env"):
+    with open(filename) as file:
         for line in file:
             line = line.strip()
             line = line.split("=")
