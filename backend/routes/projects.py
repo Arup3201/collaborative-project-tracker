@@ -1,15 +1,35 @@
-from flask import Blueprint
+from flask import Blueprint, request, jsonify
+
+from validation.payload import CreateProjectPayload
+from validation.user import User
+from services.project import ProjectService
 
 projects_blueprint = Blueprint("projects", __name__)
 
 def list_projects():
-    pass
+    user = User(**request.environ["user"])
+    projects = ProjectService().list_projects(user_id=user.id)
+    return jsonify({
+        "message": "fetched all projects", 
+        "data": projects
+    })
 
 def create_project():
-    pass
+    payload = CreateProjectPayload(**request.get_json())
+
+    user_payload = User(**request.environ["user"])
+    project = ProjectService().create_projects(name=payload.name, description=payload.description, deadline=payload.deadline, user_id=user_payload.id)
+    return jsonify({
+        "message": "project created", 
+        "data": project, 
+    })
 
 def get_project(project_id: str):
-    pass
+    project_details = ProjectService().get_project(project_id)
+    return jsonify({
+        "message": f"project {project_id} fetched", 
+        "data": project_details
+    })
 
 def get_members(project_id: str):
     pass
