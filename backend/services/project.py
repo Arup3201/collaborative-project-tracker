@@ -1,6 +1,5 @@
-from typing import List, Tuple
 from datetime import datetime
-from sqlalchemy import and_, Row
+from sqlalchemy import and_
 
 from db import Database
 from utils.id import generate_id

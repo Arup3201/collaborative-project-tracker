@@ -1,9 +1,9 @@
 from flask import Flask
-from middlewares.authorize import Authorize
 
 from env import load_dotenv
 load_dotenv()
 
+from middlewares.authorize import Authorize
 from routes.auth import auth_blueprint
 from routes.projects import projects_blueprint
 
