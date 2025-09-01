@@ -39,9 +39,10 @@ class ProjectService:
             
             member = Membership(user_id=user.id, project_id=project_id, role=Role.Owner)
 
-            with session.begin():
-                session.add(project_instance)
-                session.add(member)
+            session.add(project_instance)
+            session.add(member)
+
+            session.commit()
 
             return {
                 "id": project_instance.id, 
