@@ -32,7 +32,7 @@ def login():
         print(err)
         return make_response("SERVER_ERROR", 400)
     
-    response.set_cookie("COLLAB_TOKEN", jwt_token, expires=TOKEN_EXIRES)
+    response.set_cookie("COLLAB_TOKEN", jwt_token, expires=TOKEN_EXIRES, httponly=True, secure=True)
     return response
 
 auth_blueprint.add_url_rule("/register", endpoint="register", view_func=register, methods=['POST'])
