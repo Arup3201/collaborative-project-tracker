@@ -10,16 +10,17 @@ def generate_token(payload: dict) -> tuple[str, str|None]:
         token = jwt.encode(payload={
             **payload, 
             "exp": TOKEN_EXIRES, 
-            }, key=Env.SECRET_KEY, algorithm="SHA256")
+            }, key=Env.SECRET_KEY, algorithm="HS256")
         return token, None
     except jwt.exceptions.InvalidKeyError:
         return "", "encoding key is invalid"
-    except Exception:
+    except Exception as e:
+        print(str(e))
         return "", "unknown error while encoding jwt token"
 
 def validate_token(token: str) -> tuple[dict, str|None]:
     try:
-        payload = jwt.decode(jwt=token, key=Env.SECRET_KEY, algorithms="SHA256")
+        payload = jwt.decode(jwt=token, key=Env.SECRET_KEY, algorithms="HS256")
         return payload, None
     except jwt.exceptions.ExpiredSignatureError:
         return dict(), "jwt token signature expired"
