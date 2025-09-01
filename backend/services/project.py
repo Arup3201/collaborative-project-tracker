@@ -3,7 +3,7 @@ from sqlalchemy import and_
 
 from db import Database
 from utils.id import generate_id
-from models import Project, User, Membership
+from models import Project, User, Membership, Task
 from models.membership import Role
 
 class ProjectService:
@@ -21,7 +21,7 @@ class ProjectService:
                     "description": project.description, 
                     "deadline": project.deadline, 
                     "code": project.code, 
-                    "role": member.role, 
+                    "role": member.role.value, 
                     "created_at": project.created_at.strftime("%Y-%m-%d %I-%M-%S %p")
                 })
             
@@ -54,5 +54,43 @@ class ProjectService:
                 "created_at": project_instance.created_at.strftime("%Y-%m-%d %I:%M:%S %p")
             }
 
-    def get_project(self, project_id: str):
-        pass
+    def get_project(self, project_id: str, user_id: str):
+        with self.session() as session:
+            project = session.get(Project, project_id)
+            if not project:
+                return None, "project does not exist"
+
+            membership = session.query(Project, Membership).filter(and_(Project.id==project_id, Membership.user_id==user_id))
+            if not membership:
+                return None, "user is not part of this project"
+            
+            project_details = {
+                "id": project.id, 
+                "name": project.name, 
+                "description": project.description, 
+                "deadline": project.deadline, 
+                "created_at": project.created_at, 
+                "code": project.code, 
+                "tasks": []
+            }
+
+            tasks = session.query(Task).filter(Task.project_id==project_id).all()
+            for task in tasks:
+                assignee = session.query(User).filter(User.id==task.assignee).first()
+                if not assignee:
+                    return None, "task list has invalid assignee"
+                
+                project_details["tasks"].append({
+                    "id": task.id, 
+                    "name": task.name, 
+                    "description": task.description, 
+                    "assignee": {
+                        "id": assignee.id, 
+                        "name": assignee.name, 
+                        "email": assignee.email,
+                    }, 
+                    "status": task.status, 
+                    "created_at": task.created_at, 
+                })
+
+            return project_details
