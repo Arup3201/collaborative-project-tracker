@@ -1,3 +1,4 @@
+import json
 from werkzeug.wrappers import Request, Response, ResponseStream
 
 class Authorize:
@@ -16,11 +17,14 @@ class Authorize:
         if any([api in request.url for api in public_apis]):
             return self.app(environ, start_response)
         
-        cookies = request.cookies
-        token = next(filter(lambda cookie: "COLLAB_TOKEN" in cookie, cookies))
+        token = request.cookies.get("COLLAB_TOKEN", None)
         if token:
             print(token)
             return self.app(environ, start_response)
 
-        res = Response(u'Authorization failed', mimetype= 'text/plain', status=401)
+        res = Response(json.dumps({
+            "message": "Authorization failed", 
+            "details": "No valid token found in the request cookie", 
+            "code": 401
+        }), mimetype= 'application/json', status=401)
         return res(environ, start_response)
