@@ -29,7 +29,7 @@ class Authorize:
             return res(environ, start_response)
         
         payload, err = validate_token(token)
-        if not err:
+        if err:
             res = Response(json.dumps({
                 "message": "Authorization failed", 
                 "details": err, 
