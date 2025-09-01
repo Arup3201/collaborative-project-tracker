@@ -40,8 +40,9 @@ class ProjectService:
             member = Membership(user_id=user.id, project_id=project_id, role=Role.Owner)
 
             session.add(project_instance)
-            session.add(member)
+            session.commit()
 
+            session.add(member)
             session.commit()
 
             return {
