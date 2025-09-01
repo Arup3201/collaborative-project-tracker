@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from . import Base, Mapped, mapped_column, String, DateTime
+from models import Base, Mapped, mapped_column, String, DateTime
 
 
 class User(Base):

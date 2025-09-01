@@ -2,7 +2,7 @@ import enum
 from datetime import datetime
 from sqlalchemy import func, ForeignKey
 
-from . import Base, Mapped, mapped_column, DateTime, Enum
+from models import Base, Mapped, mapped_column, DateTime, Enum, String
 
 class Role(enum.Enum):
     Member = "Member"
@@ -11,8 +11,8 @@ class Role(enum.Enum):
 class Membership(Base):
     __tablename__ = "memberships"
 
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
-    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), primary_key=True)
     role: Mapped[Role] = mapped_column(Enum(Role))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
