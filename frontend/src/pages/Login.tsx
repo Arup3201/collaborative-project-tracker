@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import React, { useState } from "react";
+import { useNavigate } from "react-router";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 interface LoginFormData {
   email: string;
@@ -12,31 +21,33 @@ interface LoginFormData {
 }
 
 const Login: React.FC = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     // Clear error when user starts typing
-    if (error) setError('');
+    if (error) setError("");
   };
 
   const handleSubmit = async () => {
-    setError('');
+    setError("");
     setIsLoading(true);
 
     // Basic validation
     if (!formData.email.trim() || !formData.password.trim()) {
-      setError('Email and password are required');
+      setError("Email and password are required");
       setIsLoading(false);
       return;
     }
@@ -44,28 +55,26 @@ const Login: React.FC = () => {
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       setIsLoading(false);
       return;
     }
 
     try {
       // TODO: Replace with your actual login API call
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      
-      console.log('Login data:', formData);
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
+
+      console.log("Login data:", formData);
       // Handle successful login (redirect, store token, etc.)
-      
     } catch (err) {
-      setError('Invalid email or password. Please try again.');
+      setError("Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleRegisterRedirect = () => {
-    // TODO: Replace with your actual routing logic
-    console.log('Redirect to register page');
+    navigate("/register");
   };
 
   return (
@@ -77,14 +86,14 @@ const Login: React.FC = () => {
             Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -98,7 +107,7 @@ const Login: React.FC = () => {
               required
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
@@ -128,10 +137,10 @@ const Login: React.FC = () => {
               </Button>
             </div>
           </div>
-          
-          <Button 
+
+          <Button
             onClick={handleSubmit}
-            className="w-full" 
+            className="w-full"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -140,14 +149,14 @@ const Login: React.FC = () => {
                 Signing in...
               </>
             ) : (
-              'Login'
+              "Login"
             )}
           </Button>
         </CardContent>
-        
+
         <CardFooter className="flex justify-center">
           <p className="text-stone-600 text-sm">
-            Don't have an account?{' '}
+            Don't have an account?{" "}
             <Button
               variant="link"
               className="p-0 h-auto font-normal text-stone-900 underline"

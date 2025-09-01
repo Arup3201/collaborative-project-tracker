@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import React, { useState } from "react";
+import { useNavigate } from "react-router";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 interface RegisterFormData {
   firstName: string;
@@ -14,39 +23,46 @@ interface RegisterFormData {
 }
 
 const Register: React.FC = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState<RegisterFormData>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: ''
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     // Clear error when user starts typing
-    if (error) setError('');
+    if (error) setError("");
   };
 
   const handleSubmit = async () => {
-    setError('');
+    setError("");
     setIsLoading(true);
 
     // Basic validation
-    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.password.trim()) {
-      setError('All fields are required');
+    if (
+      !formData.firstName.trim() ||
+      !formData.lastName.trim() ||
+      !formData.email.trim() ||
+      !formData.password.trim()
+    ) {
+      setError("All fields are required");
       setIsLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError("Password must be at least 6 characters long");
       setIsLoading(false);
       return;
     }
@@ -54,28 +70,26 @@ const Register: React.FC = () => {
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       setIsLoading(false);
       return;
     }
 
     try {
       // TODO: Replace with your actual registration API call
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      
-      console.log('Registration data:', formData);
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
+
+      console.log("Registration data:", formData);
       // Handle successful registration (redirect, show success message, etc.)
-      
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      setError("Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleLoginRedirect = () => {
-    // TODO: Replace with your actual routing logic
-    console.log('Redirect to login page');
+    navigate("/");
   };
 
   return (
@@ -87,14 +101,14 @@ const Register: React.FC = () => {
             Create your account to get started
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <div className="gap-4 grid grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
@@ -123,7 +137,7 @@ const Register: React.FC = () => {
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -137,7 +151,7 @@ const Register: React.FC = () => {
               required
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
@@ -167,10 +181,10 @@ const Register: React.FC = () => {
               </Button>
             </div>
           </div>
-          
-          <Button 
+
+          <Button
             onClick={handleSubmit}
-            className="w-full" 
+            className="w-full"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -179,14 +193,14 @@ const Register: React.FC = () => {
                 Creating Account...
               </>
             ) : (
-              'Register'
+              "Register"
             )}
           </Button>
         </CardContent>
-        
+
         <CardFooter className="flex justify-center">
           <p className="text-stone-600 text-sm">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <Button
               variant="link"
               className="p-0 h-auto font-normal text-stone-900 underline"
