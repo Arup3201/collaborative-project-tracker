@@ -1,6 +1,8 @@
 import os
 
 class Env:
+    SECRET_KEY = os.getenv('SECRET_KEY', "")
+
     DB_HOST = os.getenv('DB_HOST')
     DB_USER = os.getenv('DB_USER')
     DB_PORT = os.getenv('DB_PORT')

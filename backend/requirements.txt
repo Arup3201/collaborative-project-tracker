@@ -3,4 +3,5 @@ flask
 psycopg2
 pydantic
 pyjwt
+python-keycloak
 sqlalchemy
