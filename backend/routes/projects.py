@@ -48,10 +48,32 @@ def get_members(project_id: str):
     })
 
 def delete_project(project_id: str):
-    pass
+    user_payload = User(**request.environ["user"])
+    err = ProjectService().delete_project(project_id=project_id, user_id=user_payload.id)
+    if err:
+        return jsonify({
+            "message": "DELETE_FAILED", 
+            "error": err, 
+            "code": 405
+        }, 405)
+
+    return jsonify({
+        "message": "project deleted", 
+    })
 
 def join_project(project_code: str):
-    pass
+    user_payload = User(**request.environ["user"])
+    err = ProjectService().join_project(project_code=project_code, user_id=user_payload.id)
+    if err:
+        return jsonify({
+            "message": "JOIN_FAILED", 
+            "error": err, 
+            "code": 400
+        }, 400)
+
+    return jsonify({
+        "message": "you have joined the project as a member", 
+    })
 
 def create_task():
     pass

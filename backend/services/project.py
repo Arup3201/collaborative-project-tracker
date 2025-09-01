@@ -116,4 +116,32 @@ class ProjectService:
             
             return members_list
 
+    def delete_project(self, project_id: str, user_id: str):
+        with self.session() as session:
+            project = session.get(Project, project_id)
+            if not project:
+                return "project does not exist"
+            
+            project_membership = session.query(Project, Membership).filter(and_(Project.id==project_id, Membership.user_id==user_id)).first()
+            if not project_membership:
+                return "user is not part of the project"
 
+            if project_membership[1].role != Role.Owner:
+                return "user is not the project owner"
+            
+            session.delete(project)
+            session.commit()
+
+    def join_project(self, project_code: str, user_id: str):
+        with self.session() as session:
+            project = session.query(Project).filter(Project.code==project_code).first()
+            if not project:
+                return "project code invalid"
+            
+            project_membership = session.query(Project, Membership).filter(and_(Project.id==project.id, Membership.user_id==user_id)).first()
+            if project_membership:
+                return "user already a member of this project"
+            
+            member = Membership(user_id=user_id, project_id=project.id, role=Role.Member)
+            session.add(member)
+            session.commit()
