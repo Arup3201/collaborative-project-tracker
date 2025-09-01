@@ -38,6 +38,7 @@ class Task(Base):
     assignee: Mapped[str] = mapped_column(ForeignKey("users.id"))
     status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus))
     
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
     project: Mapped['Project'] = relationship(back_populates="tasks")
 
     def __init__(self, id: str, name: str, description: str, code: str):
