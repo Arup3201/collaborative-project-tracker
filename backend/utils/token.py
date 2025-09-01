@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from config import Env
 
-TOKEN_EXIRES = datetime.now(tz=timezone.utc)+timedelta(seconds=30)
+TOKEN_EXIRES = datetime.now(tz=timezone.utc)+timedelta(minutes=30)
 
 def generate_token(payload: dict) -> tuple[str, str|None]:
     try:
