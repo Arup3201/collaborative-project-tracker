@@ -60,7 +60,7 @@ class ProjectService:
             if not project:
                 return None, "project does not exist"
 
-            membership = session.query(Project, Membership).filter(and_(Project.id==project_id, Membership.user_id==user_id))
+            membership = session.query(Project, Membership).filter(and_(Project.id==project_id, Membership.user_id==user_id)).first()
             if not membership:
                 return None, "user is not part of this project"
             
@@ -94,3 +94,26 @@ class ProjectService:
                 })
 
             return project_details
+
+    def get_members(self, project_id: str, user_id: str):
+        members_list = []
+        with self.session() as session:
+            project_membership = session.query(Project, Membership).filter(and_(Project.id==project_id, Membership.user_id==user_id)).first()
+            if not project_membership:
+                return None, "user is not part of the project"
+
+            members = session.query(Project, Membership).filter(and_(Project.id==project_id)).all()
+            for _, member in members:
+                user = session.query(User).filter(User.id==member.user_id).first()
+                if not user:
+                    return None, "unknown member found"
+                
+                members_list.append({
+                    "id": user.id, 
+                    "name": user.name, 
+                    "email": user.email
+                })
+            
+            return members_list
+
+

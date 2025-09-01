@@ -33,7 +33,19 @@ def get_project(project_id: str):
     })
 
 def get_members(project_id: str):
-    pass
+    user_payload = User(**request.environ["user"])
+    members, err = ProjectService().get_members(project_id=project_id, user_id=user_payload.id)
+    if err:
+        return jsonify({
+            "message": "FETCH_ERROR", 
+            "error": err, 
+            "code": 400
+        }, 400)
+
+    return jsonify({
+        "message": "members fetched", 
+        "data": members
+    })
 
 def delete_project(project_id: str):
     pass
