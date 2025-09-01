@@ -12,15 +12,17 @@ class Project(Base):
     id: Mapped[str] = mapped_column(String(150), primary_key=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=True)
+    deadline: Mapped[datetime] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     code: Mapped[str] = mapped_column(String, nullable=False)
     
     tasks: Mapped[List['Task']] = relationship(back_populates="project")
 
-    def __init__(self, id: str, name: str, description: str, code: str):
+    def __init__(self, id: str, name: str, description: str, deadline: datetime, code: str):
         self.id = id
         self.name = name
         self.description = description
+        self.deadline = deadline
         self.code = code
 
 class TaskStatus(enum.Enum):

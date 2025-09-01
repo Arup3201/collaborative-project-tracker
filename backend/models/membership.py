@@ -16,6 +16,7 @@ class Membership(Base):
     role: Mapped[Role] = mapped_column(Enum(Role))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
-    def __init__(self, user_id: str, project_id: str):
+    def __init__(self, user_id: str, project_id: str, role: Role):
         self.user_id = user_id
         self.project_id = project_id
+        self.role = role
