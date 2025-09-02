@@ -1,6 +1,8 @@
 import json
 from werkzeug.wrappers import Request, Response, ResponseStream
 
+from utils.token import validate_token
+
 class Authorize:
     """
         Middleware to authorize users by verifying the tokens
@@ -18,13 +20,23 @@ class Authorize:
             return self.app(environ, start_response)
         
         token = request.cookies.get("COLLAB_TOKEN", None)
-        if token:
-            print(token)
-            return self.app(environ, start_response)
-
-        res = Response(json.dumps({
-            "message": "Authorization failed", 
-            "details": "No valid token found in the request cookie", 
-            "code": 401
-        }), mimetype= 'application/json', status=401)
-        return res(environ, start_response)
+        if not token:
+            res = Response(json.dumps({
+                "message": "Authorization failed", 
+                "details": "No valid token found in the request cookie", 
+                "code": 401
+            }), mimetype= 'application/json', status=401)
+            return res(environ, start_response)
+        
+        payload, err = validate_token(token)
+        if err:
+            res = Response(json.dumps({
+                "message": "Authorization failed", 
+                "details": err, 
+                "code": 401
+            }), mimetype= 'application/json', status=401)
+            return res(environ, start_response)
+        
+        environ["user"] = payload
+        return self.app(environ, start_response)
+        

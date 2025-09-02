@@ -40,5 +40,5 @@ class AuthService:
                 "id": user.id, 
                 "email": user.email, 
                 "name": user.name,
-                "created_at": user.created_at.strftime("%Y-%m-%d %I:%M:%S %p")
+                "created_at": user.created_at.strftime("%Y-%m-%dT%H:%M:%SZ")
             }

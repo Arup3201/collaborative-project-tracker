@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 
 class UserCreatePayload(BaseModel):
@@ -8,3 +9,8 @@ class UserCreatePayload(BaseModel):
 class UserLoginPayload(BaseModel):
     email: str
     password: str
+
+class CreateProjectPayload(BaseModel):
+    name: str
+    description: str = ""
+    deadline: datetime
