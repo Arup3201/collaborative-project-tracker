@@ -1,5 +1,59 @@
 # Collaborative Project Tracker
 
+## Setup
+
+### Backend
+
+Follow these steps to setup the backend:
+
+#### Step 1: Create virtual environment
+
+```sh
+cd backend
+python -m venv .venv
+```
+
+#### Step 2: Activate virtual environment
+
+```sh
+.\.venv\Scripts\activate # windows
+```
+
+#### Step 3: Install libraries
+
+```sh
+pip install -r requirements.txt
+```
+
+#### Step 4: Start the server
+
+```sh
+python app.py
+```
+
+This will start the server at `localhost:8000`
+
+### Frontend
+
+Follow these steps to setup frontend:
+
+#### Step 1: Install dependencies
+
+```sh
+cd frontend
+npm install
+```
+
+### Step 2: Run the frontend
+
+```sh
+npm run dev
+```
+
+This should open the frontend at `localhost:5173`
+
+## Details
+
 Collaborative project management web app where users can -
 
 - add projects
