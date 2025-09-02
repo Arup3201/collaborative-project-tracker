@@ -8,7 +8,7 @@ from models import Project, User, Membership, Task
 from models.membership import Role
 from models.project import TaskStatus
 from exceptions import DBOverloadError, DBIntegrityError, NotFoundError, AlreadyExistError
-from exceptions.project import NotProjectMemberError, NotProjectOwner
+from exceptions.project import NotProjectMemberError, NotProjectOwner, NotTaskAssigneeError
 
 class ProjectService:
     def __init__(self):
@@ -255,13 +255,16 @@ class ProjectService:
                 if not task:
                     raise NotFoundError(f"Task with id {task_id} not found")
 
-                membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==task.project_id, Membership.user_id==user_id)).first()
+                membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project_id, Membership.user_id==user_id)).first()
                 if not membership:
-                    raise NotProjectMemberError(f"User with id {user_id} is not a member of the project with id {task.project_id}")
+                    raise NotProjectMemberError(f"User with id {user_id} is not a member of the project with id {project_id}")
 
                 assignee = session.query(User).filter(User.id==task.assignee).first()
                 if not assignee:
                     raise NotFoundError(f"Assignee with id {task.assignee} not found")
+
+                if membership[1].role != Role.Owner or assignee.id != user_id:
+                    raise NotTaskAssigneeError(f"User with id {user_id} is not a owner nor an assignee for the task with id {task_id}")
 
                 if name != "":
                     task.name = name
@@ -278,6 +281,84 @@ class ProjectService:
                         "id": assignee.id, 
                         "name": assignee.name, 
                         "email": assignee.email,
+                    }, 
+                    "status": task.status.value, 
+                    "created_at": task.created_at, 
+                }
+        except OperationalError as e:
+            print(str(e))
+            raise DBOverloadError()
+    
+    def change_status(self, task_id: str, status: TaskStatus, project_id: str, user_id: str):
+        try:
+            with self.session() as session:
+                task = session.get(Task, task_id)
+                if not task:
+                    raise NotFoundError(f"Task with id {task_id} not found")
+
+                membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project_id, Membership.user_id==user_id)).first()
+                if not membership:
+                    raise NotProjectMemberError(f"User with id {user_id} is not a member of the project with id {project_id}")
+
+                assignee = session.query(User).filter(User.id==task.assignee).first()
+                if not assignee:
+                    raise NotFoundError(f"Assignee with id {task.assignee} not found")
+
+                if membership[1].role != Role.Owner or assignee.id != user_id:
+                    raise NotTaskAssigneeError(f"User with id {user_id} is not a owner nor an assignee for the task with id {task_id}")
+
+                task.status = status
+                session.commit()
+
+                return {
+                    "id": task.id, 
+                    "name": task.name, 
+                    "description": task.description, 
+                    "assignee": {
+                        "id": assignee.id, 
+                        "name": assignee.name, 
+                        "email": assignee.email,
+                    }, 
+                    "status": task.status.value, 
+                    "created_at": task.created_at, 
+                }
+        except OperationalError as e:
+            print(str(e))
+            raise DBOverloadError()
+        
+    def change_assignee(self, task_id: str, assignee: str, project_id: str, user_id: str):
+        try:
+            with self.session() as session:
+                task = session.get(Task, task_id)
+                if not task:
+                    raise NotFoundError(f"Task with id {task_id} not found")
+
+                membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project_id, Membership.user_id==user_id)).first()
+                if not membership:
+                    raise NotProjectMemberError(f"User with id {user_id} is not a member of the project with id {project_id}")
+
+                if membership[1].role != Role.Owner:
+                    raise NotProjectOwner(f"User with id {user_id} is not a owner for the task with id {task_id}, Only project owner can change assignee")
+
+                assignee_instance = session.get(User, assignee)
+                if not assignee_instance:
+                    raise NotFoundError(f"User with id {assignee} is not a valid assignee")
+
+                membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project_id, Membership.user_id==assignee)).first()
+                if not membership:
+                    raise NotProjectMemberError(f"Assignee with id {user_id} is not a member of the project with id {project_id}")
+
+                task.assignee = assignee
+                session.commit()
+
+                return {
+                    "id": task.id, 
+                    "name": task.name, 
+                    "description": task.description, 
+                    "assignee": {
+                        "id": assignee_instance.id, 
+                        "name": assignee_instance.name, 
+                        "email": assignee_instance.email,
                     }, 
                     "status": task.status.value, 
                     "created_at": task.created_at, 

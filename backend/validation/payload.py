@@ -26,3 +26,9 @@ class CreateTaskPayload(BaseModel):
 class EditTaskPayload(BaseModel):
     name: str = ""
     description: str = ""
+
+class ChangeStatusPayload(BaseModel):
+    status: TaskStatus
+
+class ChangeAssigneePayload(BaseModel):
+    assignee: str
