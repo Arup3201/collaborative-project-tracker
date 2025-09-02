@@ -87,6 +87,7 @@ class ProjectService:
                     "deadline": project.deadline, 
                     "created_at": project.created_at, 
                     "code": project.code, 
+                    "role": membership[1].role.value, 
                     "tasks": []
                 }
 
