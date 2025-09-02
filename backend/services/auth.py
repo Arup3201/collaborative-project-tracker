@@ -12,11 +12,11 @@ class AuthService:
         self.session = Database().get_session()
 
     def register(self, username: str, email: str, password: str):
-        if re.match(r"\"?([-a-zA-Z0-9.`?{}]+@\w+\.\w+)\"?", email):
+        if not re.match(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', email):
             raise BadPayloadError("'email' field value is not a valid email")
 
         with self.session() as session:
-            user = session.query(User).filter(User.email==email)
+            user = session.query(User).filter(User.email==email).first()
             if user:
                 raise AlreadyExistError(f"User with email {email} already exist")
 
