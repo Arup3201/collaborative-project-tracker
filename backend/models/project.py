@@ -43,8 +43,9 @@ class Task(Base):
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
     project: Mapped['Project'] = relationship(back_populates="tasks")
 
-    def __init__(self, id: str, name: str, description: str, code: str):
+    def __init__(self, id: str, name: str, description: str, assignee: str, status: TaskStatus):
         self.id = id
         self.name = name
         self.description = description
-        self.code = code
+        self.assignee = assignee
+        self.status = status

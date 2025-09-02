@@ -14,4 +14,4 @@ app.register_blueprint(auth_blueprint, url_prefix="/api/v1/auth")
 app.register_blueprint(projects_blueprint, url_prefix="/api/v1/projects")
 
 if __name__=='__main__':
-    app.run(port=8000)
+    app.run(port=8000, debug=True)
