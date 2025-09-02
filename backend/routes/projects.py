@@ -113,9 +113,9 @@ def create_project():
     try:
         project = ProjectService().create_projects(name=payload.name, description=payload.description, deadline=payload.deadline, user_id=user.id)
         return jsonify({
-            "message": "project created", 
+            "message": "Project created", 
             "data": project, 
-        })
+        }), 201
     except NotFoundError as e:
         return jsonify({
             "error": {
@@ -470,7 +470,7 @@ def create_task(project_id: str):
                                      user_id=user_payload.id)
         return jsonify({
             "message": "Task is created", 
-        })
+        }), 201
     except NotProjectMemberError as e:
         return jsonify({
             "error": {
