@@ -28,6 +28,8 @@ class AuthService:
             with self.session() as session:
                 session.add(user)
                 session.commit()
+
+                return user.id
         except OperationalError as e:
             print(e)
             raise DBOverloadError()
@@ -47,7 +49,6 @@ class AuthService:
                     "id": user.id, 
                     "email": user.email, 
                     "name": user.name,
-                    "created_at": user.created_at.strftime("%Y-%m-%dT%H:%M:%SZ")
                 }
         except OperationalError as e:
             print(e)

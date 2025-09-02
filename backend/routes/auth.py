@@ -26,9 +26,9 @@ def register():
                 "message": "Input validation failed",
                 "details": "Please make sure your input has required fields with their correct type",  
                 "errors": errors, 
-                "code": "BAD_REQUEST"
+                "code": "INVALID_INPUT"
             }
-        }), 400
+        }), 422
     
     if not user_data.username:
         return jsonify({
@@ -56,10 +56,10 @@ def register():
         }), 400
     
     try:
-        AuthService().register(username=user_data.username, email=user_data.email, password=user_data.password)
+        user_id = AuthService().register(username=user_data.username, email=user_data.email, password=user_data.password)
         return jsonify({
-            "message": "User created", 
-            "code": 201
+            "message": "User registered successfully",
+            "user_id": user_id
         }), 201
     except BadPayloadError as e:
         return jsonify({
@@ -76,7 +76,7 @@ def register():
                 "details": str(e),  
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 409
     except DBOverloadError as e:
         print(str(e))
         return jsonify({
@@ -109,15 +109,14 @@ def login():
                 "message": "Input validation failed",
                 "details": "Please make sure your input has required fields with their correct type",  
                 "errors": errors, 
-                "code": "BAD_REQUEST"
+                "code": "INVALID_INPUT"
             }
-        }), 400
+        }), 422
 
     try:
         user = AuthService().login(email=user_data.email, password=user_data.password)
         response = make_response({
-            "message": "login success", 
-            "data": user
+            "user": user
         })
         jwt_token = generate_token(user)
         response.set_cookie(TOKEN_NAME, jwt_token, expires=TOKEN_EXIRES, httponly=True, secure=True)
@@ -137,7 +136,7 @@ def login():
                 "details": str(e),  
                 "code": "WRONG_PASSWORD"
             }
-        }), 404
+        }), 400
     except JWTError as e:
         return jsonify({
             "error": {
@@ -145,7 +144,7 @@ def login():
                 "details": str(e),  
                 "code": "TOKEN_ERROR"
             }
-        }), 400
+        }), 500
     except Exception as e:
         print(str(e))
         return jsonify({

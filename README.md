@@ -198,8 +198,10 @@ I have chooses **Python** for building this project because it helps me make the
 **Response Code**: 201
 
 **Errors**:
+- `400` - Invalid inputs (email, name, password)
 - `409` - email already exists
 - `422` - Validation errors
+- `500` - Server error (code logic problem)
 
 #### Login User
 
@@ -217,10 +219,10 @@ I have chooses **Python** for building this project because it helps me make the
 }
 ```
 
-**Response**:
+**Response Body**:
+
 ```json
 {
-  "access_token": "string",
   "user": {
     "id": "string",
     "name": "string",
@@ -229,9 +231,24 @@ I have chooses **Python** for building this project because it helps me make the
 }
 ```
 
+**Response Cookie**: 
+
+JWT token payload
+
+```json
+{
+    "user": {
+        "id": "string",
+        "name": "string",
+        "email": "string"
+    }
+}
+```
+
 **Errors**:
 - `400` - Missing email or password
 - `422` - Validation error
+- `500` - Server error (code logic problem)
 
 ### Project Endpoints
 
