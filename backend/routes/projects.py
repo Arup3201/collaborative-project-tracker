@@ -1,11 +1,11 @@
 from flask import Blueprint, request, jsonify
 import pydantic
 
-from validation.payload import CreateProjectPayload, CreateTaskPayload
+from validation.payload import CreateProjectPayload, CreateTaskPayload, EditTaskPayload
 from validation.user import User
 from services.project import ProjectService
 from exceptions import DBOverloadError, DBIntegrityError, NotFoundError, AlreadyExistError
-from exceptions.project import NotProjectMemberError, NotProjectOwner
+from exceptions.project import NotProjectMemberError, NotProjectOwner, NotTaskAssigneeError
 
 projects_blueprint = Blueprint("projects", __name__)
 
@@ -534,7 +534,8 @@ def get_task(project_id: str, task_id: str):
         }), 500
     try:
         task = ProjectService().get_task(task_id=task_id, 
-                                  user_id=user_payload.id)
+                                         project_id=project_id, 
+                                         user_id=user_payload.id)
         return jsonify({
             "message": "Task fetched",
             "data": task 
@@ -574,7 +575,105 @@ def get_task(project_id: str, task_id: str):
         }), 500
 
 def edit_task(project_id: str, task_id: str):
-    pass
+    try:
+        payload = EditTaskPayload(**request.get_json())
+    except pydantic.ValidationError as e:
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "message": err["msg"], 
+                "input": err["input"], 
+                "loc": err["loc"]
+            })
+
+        return jsonify({
+            "error": {
+                "message": "Input validation failed",
+                "details": "Please make sure your input has required fields with their correct type",  
+                "errors": errors, 
+                "code": "BAD_REQUEST"
+            }
+        }), 400
+
+    if not payload.name and not payload.description:
+        return jsonify({
+            "error": {
+                "message": "Invalid edit request",
+                "details": "Atleadt one field among 'name' and 'description' need to be present",  
+                "code": "BAD_REQUEST"
+            }
+        }), 400
+
+    try:
+        user_payload = User(**request.environ["user"])
+    except pydantic.ValidationError as e:
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "message": err["msg"], 
+                "input": err["input"], 
+                "loc": err["loc"]
+            })
+        print(errors)
+        return jsonify({
+            "error": {
+                "message": "Invalid user data",
+                "details": "User data saved at server is corrupted",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+
+    try:
+        edited_task = ProjectService().edit_task(task_id=task_id, 
+                                   name=payload.name, 
+                                   description=payload.description, 
+                                   project_id=project_id, 
+                                   user_id=user_payload.id)
+        return jsonify({
+            "message": "Task values have been edited", 
+            "data": edited_task
+        })
+    except NotProjectMemberError as e:
+        return jsonify({
+            "error": {
+                "message": "User is not a project member",
+                "details": str(e),  
+                "code": "NOT_MEMBER"
+            }
+        }), 400
+    except NotTaskAssigneeError as e:
+        return jsonify({
+            "error": {
+                "message": "Member is not the task assignee",
+                "details": str(e),  
+                "code": "NOT_ASSIGNEE"
+            }
+        }), 400
+    except NotFoundError as e:
+        return jsonify({
+            "error": {
+                "message": "Value not found",
+                "details": str(e),  
+                "code": "NOT_FOUND"
+            }
+        }), 404
+    except DBOverloadError as e:
+        return jsonify({
+            "error": {
+                "message": "Server is overloaded",
+                "details": str(e),  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    except Exception as e:
+        print(str(e))
+        return jsonify({
+            "error": {
+                "message": "Something went wrong in the server",
+                "details": "We are working on the error, please try again later",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
 
 def change_task_status(project_id: str, task_id: str):
     pass
