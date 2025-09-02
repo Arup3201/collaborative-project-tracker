@@ -5,6 +5,7 @@ from sqlalchemy import func, ForeignKey
 from sqlalchemy.orm import relationship
 
 from models import Base, Mapped, mapped_column, String, DateTime, Enum
+from models import Membership
 
 class Project(Base):
     __tablename__ = "projects"
@@ -17,6 +18,7 @@ class Project(Base):
     code: Mapped[str] = mapped_column(String, nullable=False)
     
     tasks: Mapped[List['Task']] = relationship(back_populates="project")
+    memberships: Mapped[List['Membership']] = relationship(cascade="all, delete-orphan")
 
     def __init__(self, id: str, name: str, description: str, deadline: datetime, code: str):
         self.id = id
@@ -43,8 +45,9 @@ class Task(Base):
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"))
     project: Mapped['Project'] = relationship(back_populates="tasks")
 
-    def __init__(self, id: str, name: str, description: str, code: str):
+    def __init__(self, id: str, name: str, description: str, assignee: str, status: TaskStatus):
         self.id = id
         self.name = name
         self.description = description
-        self.code = code
+        self.assignee = assignee
+        self.status = status

@@ -7,7 +7,7 @@ from utils.id import generate_id
 from models import Project, User, Membership, Task
 from models.membership import Role
 from models.project import TaskStatus
-from exceptions import DBOverloadError, DBIntegrityError, NotFoundError
+from exceptions import DBOverloadError, DBIntegrityError, NotFoundError, AlreadyExistError
 from exceptions.project import NotProjectMemberError, NotProjectOwner
 
 class ProjectService:
@@ -87,6 +87,7 @@ class ProjectService:
                     "deadline": project.deadline, 
                     "created_at": project.created_at, 
                     "code": project.code, 
+                    "role": membership[1].role.value, 
                     "tasks": []
                 }
 
@@ -174,7 +175,7 @@ class ProjectService:
                 
                 project_membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project.id, Membership.user_id==user_id)).first()
                 if project_membership:
-                    raise NotProjectMemberError(f"User with id {user_id} is not a member of the project with id {project.id}")
+                    raise AlreadyExistError(f"User with id {user_id} is already a member of the project with id {project.id}")
                 
                 member = Membership(user_id=user_id, project_id=project.id, role=Role.Member)
                 session.add(member)
@@ -183,5 +184,30 @@ class ProjectService:
             print(str(e))
             raise DBOverloadError()
 
-    def create_task(self, name: str, description: str, assignee: str, status: TaskStatus, project_id: str):
-        pass
+    def create_task(self, name: str, description: str, assignee: str, status: TaskStatus, project_id: str, user_id: str):
+        try:
+            with self.session() as session:
+                checking = session.query(Project).filter(Project.id==project_id).first()
+                if not checking:
+                    raise NotFoundError(f"Project with id {project_id} is not found")
+                
+                checking = session.query(User).filter(User.id==assignee).first()
+                if not checking:
+                    raise NotFoundError("assignee with id {assignee} does not exist")
+
+                project_membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project_id, Membership.user_id==assignee)).first()
+                if not project_membership:
+                    raise NotProjectMemberError(f"User with id {user_id} is not a member of the project with id {project_id}")
+                
+                if project_membership[1].role != Role.Owner:
+                    raise NotProjectOwner(f"User with id {user_id} is not the owner of the project with id {project_id}")
+                
+                task_id = generate_id("TASK_")
+                task = Task(id=task_id, name=name, description=description, assignee=assignee, status=status)
+                session.add(task)
+                session.commit()
+
+        except OperationalError as e:
+            print(str(e))
+            raise DBOverloadError()
+    
