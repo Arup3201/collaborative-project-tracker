@@ -1,10 +1,25 @@
-# collaborative-project-tracker
-Project management web app where users can collaborate on projects, add tasks, assign them to team members and track them
+# Collaborative Project Tracker
 
-## Keycloak setup
+Collaborative project management web app where users can -
 
-Run the following command to install keycloak image:
+- add projects
+- collaborate on projects
+- add task in projects
+- assign task to members
+- join projects using project code
+- track tasks for each project
 
-```sh
-docker run -p 127.0.0.1:8080:8080 -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:26.3.3 start-dev
-```
+and also restricts users based on their role in the project.
+
+Owners of a project has permission to -
+
+- delete the project
+- create task
+- assign task to a member
+- change task status
+
+Members of a project has permission to -
+
+- see the project
+- see the tasks
+- change the task status he is part of
