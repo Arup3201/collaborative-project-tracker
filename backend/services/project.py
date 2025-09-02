@@ -5,6 +5,7 @@ from db import Database
 from utils.id import generate_id
 from models import Project, User, Membership, Task
 from models.membership import Role
+from models.project import TaskStatus
 
 class ProjectService:
     def __init__(self):
@@ -60,7 +61,7 @@ class ProjectService:
             if not project:
                 return None, "project does not exist"
 
-            membership = session.query(Project, Membership).filter(and_(Project.id==project_id, Membership.user_id==user_id)).first()
+            membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project_id, Membership.user_id==user_id)).first()
             if not membership:
                 return None, "user is not part of this project"
             
@@ -98,12 +99,13 @@ class ProjectService:
     def get_members(self, project_id: str, user_id: str):
         members_list = []
         with self.session() as session:
-            project_membership = session.query(Project, Membership).filter(and_(Project.id==project_id, Membership.user_id==user_id)).first()
+            project_membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project_id, Membership.user_id==user_id)).first()
             if not project_membership:
                 return None, "user is not part of the project"
 
-            members = session.query(Project, Membership).filter(and_(Project.id==project_id)).all()
-            for _, member in members:
+            project_members = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project_id)).all()
+            for row in project_members:
+                member = row[1]
                 user = session.query(User).filter(User.id==member.user_id).first()
                 if not user:
                     return None, "unknown member found"
@@ -111,10 +113,11 @@ class ProjectService:
                 members_list.append({
                     "id": user.id, 
                     "name": user.name, 
-                    "email": user.email
+                    "email": user.email, 
+                    "role": member.role.value
                 })
             
-            return members_list
+            return members_list, None
 
     def delete_project(self, project_id: str, user_id: str):
         with self.session() as session:
@@ -122,7 +125,7 @@ class ProjectService:
             if not project:
                 return "project does not exist"
             
-            project_membership = session.query(Project, Membership).filter(and_(Project.id==project_id, Membership.user_id==user_id)).first()
+            project_membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project_id, Membership.user_id==user_id)).first()
             if not project_membership:
                 return "user is not part of the project"
 
@@ -138,10 +141,13 @@ class ProjectService:
             if not project:
                 return "project code invalid"
             
-            project_membership = session.query(Project, Membership).filter(and_(Project.id==project.id, Membership.user_id==user_id)).first()
+            project_membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project.id, Membership.user_id==user_id)).first()
             if project_membership:
                 return "user already a member of this project"
             
             member = Membership(user_id=user_id, project_id=project.id, role=Role.Member)
             session.add(member)
             session.commit()
+
+    def create_task(self, name: str, description: str, assignee: str, status: TaskStatus, project_id: str):
+        pass
