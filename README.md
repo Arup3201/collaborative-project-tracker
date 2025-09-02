@@ -94,3 +94,74 @@ I have chooses **Python** for building this project because it helps me make the
 
 - Language: Typescript
 - Framework: ReactJS
+
+## Database models
+
+### User Table
+
+**Usage**: Stores user account information for authentication and identification throughout the application.
+
+**Columns**:
+- `id` (String, 150 chars) - Unique identifier for each user, primary key
+- `name` (String, 50 chars) - User's display name, required
+- `email` (String, 150 chars) - User's email address for login, required
+- `password_hash` (String, 150 chars) - Hashed password for security, required
+- `created_at` (DateTime) - Account creation timestamp, auto-generated
+
+### Project Table
+
+**Usage**: Stores project information including details, deadlines, and unique join codes for collaboration.
+
+**Columns**:
+- `id` (String, 150 chars) - Unique identifier for each project, primary key
+- `name` (String, 150 chars) - Project title/name, required
+- `description` (String) - Detailed project description, optional
+- `deadline` (DateTime) - Project completion deadline, required
+- `created_at` (DateTime) - Project creation timestamp, auto-generated
+- `code` (String) - Unique join code for users to join the project, required
+
+### Task Table
+
+**Usage**: Stores individual tasks within projects, tracking assignment, status, and progress.
+
+**Columns**:
+- `id` (String, 150 chars) - Unique identifier for each task, primary key
+- `name` (String, 150 chars) - Task title/name, required
+- `description` (String) - Detailed task description, optional
+- `created_at` (DateTime) - Task creation timestamp, auto-generated
+- `assignee` (String) - Foreign key to users.id, identifies task assignee
+- `status` (Enum: TaskStatus) - Current task status (To Do, In Progress, Completed)
+- `project_id` (String) - Foreign key to projects.id, links task to project
+
+### Membership Table
+
+**Usage**: Junction table managing many-to-many relationships between users and projects with role-based access control.
+
+**Columns**:
+- `user_id` (String) - Foreign key to users.id, part of composite primary key
+- `project_id` (String) - Foreign key to projects.id, part of composite primary key
+- `role` (Enum: Role) - User's role in the project (Member, Owner)
+- `created_at` (DateTime) - Membership creation timestamp, auto-generated
+
+### Table Relationships
+
+### User ↔ Project (Many-to-Many via Membership)
+- **Users** can be members of multiple **Projects**
+- **Projects** can have multiple **Users** as members
+- Relationship managed through **Membership** table with role-based permissions
+
+### User → Task (One-to-Many)
+- **Users** can be assigned to multiple **Tasks**
+- Each **Task** has exactly one **User** as assignee
+
+### Project → Task (One-to-Many)
+- **Projects** contain multiple **Tasks**
+- Each **Task** belongs to exactly one **Project**
+
+### User → Membership (One-to-Many)
+- **Users** can have multiple **Memberships** (different projects)
+- Each **Membership** belongs to exactly one **User**
+
+### Project → Membership (One-to-Many)
+- **Projects** can have multiple **Memberships** (different users)
+- Each **Membership** belongs to exactly one **Project**
