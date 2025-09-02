@@ -2,7 +2,7 @@ import jwt
 from datetime import datetime, timedelta, timezone
 
 from config import Env
-from exceptions import JWTError
+from exceptions.auth import JWTError
 
 TOKEN_NAME = "COLLAB_TOKEN"
 TOKEN_EXIRES = datetime.now(tz=timezone.utc)+timedelta(minutes=30)

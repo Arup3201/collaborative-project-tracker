@@ -4,7 +4,8 @@ import pydantic
 from services.auth import AuthService
 from utils.token import generate_token, TOKEN_NAME, TOKEN_EXIRES
 from validation.payload import UserCreatePayload, UserLoginPayload
-from exceptions import BadPayloadError, DBError, NotFoundError, IncorrectPasswordError, JWTError
+from exceptions import BadPayloadError, DBOverloadError, NotFoundError, AlreadyExistError
+from exceptions.auth import IncorrectPasswordError, JWTError
 
 auth_blueprint = Blueprint("auth", __name__)
 
@@ -68,7 +69,15 @@ def register():
                 "code": "BAD_REQUEST"
             }
         }), 400
-    except DBError as e:
+    except AlreadyExistError as e:
+        return jsonify({
+            "error": {
+                "message": "User already exists",
+                "details": str(e),  
+                "code": "BAD_REQUEST"
+            }
+        }), 400
+    except DBOverloadError as e:
         print(str(e))
         return jsonify({
             "message": "Database failed", 
