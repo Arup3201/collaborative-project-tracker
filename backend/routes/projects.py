@@ -1,79 +1,383 @@
 from flask import Blueprint, request, jsonify
+import pydantic
 
 from validation.payload import CreateProjectPayload
 from validation.user import User
 from services.project import ProjectService
+from exceptions import DBOverloadError, DBIntegrityError, NotFoundError
+from exceptions.project import NotProjectMemberError, NotProjectOwner
 
 projects_blueprint = Blueprint("projects", __name__)
 
 def list_projects():
-    user = User(**request.environ["user"])
-    projects = ProjectService().list_projects(user_id=user.id)
-    return jsonify({
-        "message": "fetched all projects", 
-        "data": projects
-    })
+    try:
+        user = User(**request.environ["user"])
+    except pydantic.ValidationError as e:
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "message": err["msg"], 
+                "input": err["input"], 
+                "loc": err["loc"]
+            })
+        print(errors)
+        return jsonify({
+            "error": {
+                "message": "Invalid user data",
+                "details": "User data saved at server is corrupted",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+
+    try:
+        projects = ProjectService().list_projects(user_id=user.id)
+        return jsonify({
+            "message": "fetched all projects", 
+            "data": projects
+        })
+    except DBOverloadError as e:
+        return jsonify({
+            "error": {
+                "message": "Server is overloaded",
+                "details": str(e),  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    except Exception as e:
+        print(e)
+        return jsonify({
+            "error": {
+                "message": "Unknown server error occured",
+                "details": "We are working on the server, please try again later",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
 
 def create_project():
-    payload = CreateProjectPayload(**request.get_json())
+    try:
+        payload = CreateProjectPayload(**request.get_json())
+    except pydantic.ValidationError as e:
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "message": err["msg"], 
+                "input": err["input"], 
+                "loc": err["loc"]
+            })
 
-    user_payload = User(**request.environ["user"])
-    project = ProjectService().create_projects(name=payload.name, description=payload.description, deadline=payload.deadline, user_id=user_payload.id)
-    return jsonify({
-        "message": "project created", 
-        "data": project, 
-    })
+        return jsonify({
+            "error": {
+                "message": "Input validation failed",
+                "details": "Please make sure your input has required fields with their correct type",  
+                "errors": errors, 
+                "code": "BAD_REQUEST"
+            }
+        }), 400
+
+    try:
+        user = User(**request.environ["user"])
+    except pydantic.ValidationError as e:
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "message": err["msg"], 
+                "input": err["input"], 
+                "loc": err["loc"]
+            })
+        print(errors)
+        return jsonify({
+            "error": {
+                "message": "Invalid user data",
+                "details": "User data saved at server is corrupted",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    
+    try:
+        project = ProjectService().create_projects(name=payload.name, description=payload.description, deadline=payload.deadline, user_id=user.id)
+        return jsonify({
+            "message": "project created", 
+            "data": project, 
+        })
+    except NotFoundError as e:
+        return jsonify({
+            "error": {
+                "message": "Value not found",
+                "details": str(e),  
+                "code": "NOT_FOUND"
+            }
+        }), 404
+    except DBIntegrityError as e:
+        return jsonify({
+            "error": {
+                "message": str(e),
+                "details": "While creating membership and project intance, integrity error happened",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    except DBOverloadError as e:
+        return jsonify({
+            "error": {
+                "message": "Server is overloaded",
+                "details": str(e),  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    except Exception as e:
+        print(str(e))
+        return jsonify({
+            "error": {
+                "message": "Something went wrong in the server",
+                "details": "We are working on the error, please try again later",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
 
 def get_project(project_id: str):
-    user_payload = User(**request.environ["user"])
-    project_details = ProjectService().get_project(project_id=project_id, user_id=user_payload.id)
-    return jsonify({
-        "message": f"project {project_id} fetched", 
-        "data": project_details
-    })
+    try:
+        user_payload = User(**request.environ["user"])
+    except pydantic.ValidationError as e:
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "message": err["msg"], 
+                "input": err["input"], 
+                "loc": err["loc"]
+            })
+        print(errors)
+        return jsonify({
+            "error": {
+                "message": "Invalid user data",
+                "details": "User data saved at server is corrupted",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    
+    try:
+        project_details = ProjectService().get_project(project_id=project_id, user_id=user_payload.id)
+        return jsonify({
+            "message": f"project {project_id} fetched", 
+            "data": project_details
+        })
+    except NotProjectMemberError as e:
+        return jsonify({
+            "error": {
+                "message": "User is not a project member",
+                "details": str(e),  
+                "code": "NOT_MEMBER"
+            }
+        }), 400
+    except NotFoundError as e:
+        return jsonify({
+            "error": {
+                "message": "Value not found",
+                "details": str(e),  
+                "code": "NOT_FOUND"
+            }
+        }), 404
+    except DBOverloadError as e:
+        return jsonify({
+            "error": {
+                "message": "Server is overloaded",
+                "details": str(e),  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    except Exception as e:
+        print(str(e))
+        return jsonify({
+            "error": {
+                "message": "Something went wrong in the server",
+                "details": "We are working on the error, please try again later",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
 
 def get_members(project_id: str):
-    user_payload = User(**request.environ["user"])
-    members, err = ProjectService().get_members(project_id=project_id, user_id=user_payload.id)
-    if err:
+    try:
+        user_payload = User(**request.environ["user"])
+    except pydantic.ValidationError as e:
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "message": err["msg"], 
+                "input": err["input"], 
+                "loc": err["loc"]
+            })
+        print(errors)
         return jsonify({
-            "message": "FETCH_ERROR", 
-            "error": err, 
-            "code": 400
-        }, 400)
+            "error": {
+                "message": "Invalid user data",
+                "details": "User data saved at server is corrupted",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
 
-    return jsonify({
-        "message": "members fetched", 
-        "data": members
-    })
+    try:
+        members, err = ProjectService().get_members(project_id=project_id, user_id=user_payload.id)
+        return jsonify({
+            "message": "members fetched", 
+            "data": members
+        })
+    except NotProjectMemberError as e:
+        return jsonify({
+            "error": {
+                "message": "User is not a project member",
+                "details": str(e),  
+                "code": "NOT_MEMBER"
+            }
+        }), 400
+    except NotFoundError as e:
+        return jsonify({
+            "error": {
+                "message": "Value not found",
+                "details": str(e),  
+                "code": "NOT_FOUND"
+            }
+        }), 404
+    except DBOverloadError as e:
+        return jsonify({
+            "error": {
+                "message": "Server is overloaded",
+                "details": str(e),  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    except Exception as e:
+        print(str(e))
+        return jsonify({
+            "error": {
+                "message": "Something went wrong in the server",
+                "details": "We are working on the error, please try again later",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
 
 def delete_project(project_id: str):
-    user_payload = User(**request.environ["user"])
-    err = ProjectService().delete_project(project_id=project_id, user_id=user_payload.id)
-    if err:
+    try:
+        user_payload = User(**request.environ["user"])
+    except pydantic.ValidationError as e:
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "message": err["msg"], 
+                "input": err["input"], 
+                "loc": err["loc"]
+            })
+        print(errors)
         return jsonify({
-            "message": "DELETE_FAILED", 
-            "error": err, 
-            "code": 405
-        }, 405)
+            "error": {
+                "message": "Invalid user data",
+                "details": "User data saved at server is corrupted",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
 
-    return jsonify({
-        "message": "project deleted", 
-    })
+    try:
+        ProjectService().delete_project(project_id=project_id, user_id=user_payload.id)
+        return jsonify({
+            "message": "project deleted", 
+        })
+    except NotProjectMemberError as e:
+        return jsonify({
+            "error": {
+                "message": "User is not a project member",
+                "details": str(e),  
+                "code": "NOT_MEMBER"
+            }
+        }), 400
+    except NotProjectOwner as e:
+        return jsonify({
+            "error": {
+                "message": "User is not the project owner",
+                "details": str(e),  
+                "code": "NOT_OWNER"
+            }
+        }), 400
+    except NotFoundError as e:
+        return jsonify({
+            "error": {
+                "message": "Value not found",
+                "details": str(e),  
+                "code": "NOT_FOUND"
+            }
+        }), 404
+    except DBOverloadError as e:
+        return jsonify({
+            "error": {
+                "message": "Server is overloaded",
+                "details": str(e),  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    except Exception as e:
+        print(str(e))
+        return jsonify({
+            "error": {
+                "message": "Something went wrong in the server",
+                "details": "We are working on the error, please try again later",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
 
 def join_project(project_code: str):
-    user_payload = User(**request.environ["user"])
-    err = ProjectService().join_project(project_code=project_code, user_id=user_payload.id)
-    if err:
+    try:
+        user_payload = User(**request.environ["user"])
+    except pydantic.ValidationError as e:
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "message": err["msg"], 
+                "input": err["input"], 
+                "loc": err["loc"]
+            })
+        print(errors)
         return jsonify({
-            "message": "JOIN_FAILED", 
-            "error": err, 
-            "code": 400
-        }, 400)
+            "error": {
+                "message": "Invalid user data",
+                "details": "User data saved at server is corrupted",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
 
-    return jsonify({
-        "message": "you have joined the project as a member", 
-    })
+    try:
+        ProjectService().join_project(project_code=project_code, user_id=user_payload.id)
+        return jsonify({
+            "message": "You have joined the project as a member", 
+        })
+    except NotProjectMemberError as e:
+        return jsonify({
+            "error": {
+                "message": "User is not a project member",
+                "details": str(e),  
+                "code": "NOT_MEMBER"
+            }
+        }), 400
+    except NotFoundError as e:
+        return jsonify({
+            "error": {
+                "message": "Value not found",
+                "details": str(e),  
+                "code": "NOT_FOUND"
+            }
+        }), 404
+    except DBOverloadError as e:
+        return jsonify({
+            "error": {
+                "message": "Server is overloaded",
+                "details": str(e),  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    except Exception as e:
+        print(str(e))
+        return jsonify({
+            "error": {
+                "message": "Something went wrong in the server",
+                "details": "We are working on the error, please try again later",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
 
 def create_task():
     pass
