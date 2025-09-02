@@ -514,7 +514,64 @@ def create_task(project_id: str):
         }), 500
 
 def get_task(project_id: str, task_id: str):
-    pass
+    try:
+        user_payload = User(**request.environ["user"])
+    except pydantic.ValidationError as e:
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "message": err["msg"], 
+                "input": err["input"], 
+                "loc": err["loc"]
+            })
+        print(errors)
+        return jsonify({
+            "error": {
+                "message": "Invalid user data",
+                "details": "User data saved at server is corrupted",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    try:
+        task = ProjectService().get_task(task_id=task_id, 
+                                  user_id=user_payload.id)
+        return jsonify({
+            "message": "Task fetched",
+            "data": task 
+        })
+    except NotProjectMemberError as e:
+        return jsonify({
+            "error": {
+                "message": "User is not a project member",
+                "details": str(e),  
+                "code": "NOT_MEMBER"
+            }
+        }), 400
+    except NotFoundError as e:
+        return jsonify({
+            "error": {
+                "message": "Value not found",
+                "details": str(e),  
+                "code": "NOT_FOUND"
+            }
+        }), 404
+    except DBOverloadError as e:
+        return jsonify({
+            "error": {
+                "message": "Server is overloaded",
+                "details": str(e),  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    except Exception as e:
+        print(str(e))
+        return jsonify({
+            "error": {
+                "message": "Something went wrong in the server",
+                "details": "We are working on the error, please try again later",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
 
 def edit_task(project_id: str, task_id: str):
     pass
