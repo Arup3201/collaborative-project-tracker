@@ -85,32 +85,46 @@ class ProjectService:
                     "name": project.name, 
                     "description": project.description, 
                     "deadline": project.deadline, 
-                    "created_at": project.created_at, 
+                    "created_at": project.created_at.strftime("%Y-%m-%d %I:%M:%S %p"), 
                     "code": project.code, 
                     "role": membership[1].role.value, 
-                    "tasks": []
                 }
 
-                tasks = session.query(Task).filter(Task.project_id==project_id).all()
-                for task in tasks:
+                return project_details
+        except OperationalError as e:
+            print(str(e))
+            raise DBOverloadError()
+
+    def get_tasks(self, project_id: str, user_id: str):
+        try:
+            with self.session() as session:
+                project = session.get(Project, project_id)
+                if not project:
+                    raise NotFoundError(f"Project with id {project_id} not found")
+
+                membership = session.query(Project, Membership).filter(and_(Project.id==Membership.project_id, Project.id==project_id, Membership.user_id==user_id)).first()
+                if not membership:
+                    raise NotProjectMemberError(f"User with id {user_id} is not a member of the project with id {project_id}")
+                
+                tasks = []
+                task_instances = session.query(Task).filter(Task.project_id==project_id).all()
+                for task in task_instances:
                     assignee = session.query(User).filter(User.id==task.assignee).first()
                     if not assignee:
                         raise 
                     
-                    project_details["tasks"].append({
+                    tasks.append({
                         "id": task.id, 
                         "name": task.name, 
                         "description": task.description, 
-                        "assignee": {
-                            "id": assignee.id, 
-                            "name": assignee.name, 
-                            "email": assignee.email,
-                        }, 
+                        "assignee": assignee.id, 
+                        "assignee_email": assignee.email, 
+                        "assignee_name": assignee.name, 
                         "status": task.status.value, 
-                        "created_at": task.created_at, 
+                        "created_at": task.created_at.strftime("%Y-%m-%d %I:%M:%S %p"), 
                     })
-
-                return project_details
+                return tasks
+        
         except OperationalError as e:
             print(str(e))
             raise DBOverloadError()
@@ -135,10 +149,11 @@ class ProjectService:
                         raise Exception("ERROR: member has no corresponding user in the users table")
                     
                     members_list.append({
-                        "id": user.id, 
+                        "user_id": user.id, 
                         "name": user.name, 
                         "email": user.email, 
-                        "role": member.role.value
+                        "role": member.role.value, 
+                        "joined_at": member.created_at.strftime("%Y-%m-%d %I:%M:%S %p")
                     })
                 
                 return members_list, None
@@ -180,6 +195,12 @@ class ProjectService:
                 member = Membership(user_id=user_id, project_id=project.id, role=Role.Member)
                 session.add(member)
                 session.commit()
+
+                return {
+                    "id": project.id, 
+                    "name": project.name, 
+                    "description": project.description
+                }
         except OperationalError as e:
             print(str(e))
             raise DBOverloadError()
@@ -235,13 +256,12 @@ class ProjectService:
                     "id": task.id, 
                     "name": task.name, 
                     "description": task.description, 
-                    "assignee": {
-                        "id": assignee.id, 
-                        "name": assignee.name, 
-                        "email": assignee.email,
-                    }, 
+                    "assignee": assignee.id, 
+                    "assignee_name": assignee.name, 
+                    "assignee_email": assignee.email,
                     "status": task.status.value, 
-                    "created_at": task.created_at, 
+                    "created_at": task.created_at.strftime("%Y-%m-%d %I:%M:%S %p"), 
+                    "project_id": project_id
                 }
 
         except OperationalError as e:
@@ -277,13 +297,12 @@ class ProjectService:
                     "id": task.id, 
                     "name": task.name, 
                     "description": task.description, 
-                    "assignee": {
-                        "id": assignee.id, 
-                        "name": assignee.name, 
-                        "email": assignee.email,
-                    }, 
+                    "assignee": assignee.id, 
+                    "assignee_name": assignee.name, 
+                    "assignee_email": assignee.email,
                     "status": task.status.value, 
-                    "created_at": task.created_at, 
+                    "created_at": task.created_at.strftime("%Y-%m-%d %I:%M:%S %p"), 
+                    "project_id": project_id
                 }
         except OperationalError as e:
             print(str(e))
@@ -312,15 +331,7 @@ class ProjectService:
 
                 return {
                     "id": task.id, 
-                    "name": task.name, 
-                    "description": task.description, 
-                    "assignee": {
-                        "id": assignee.id, 
-                        "name": assignee.name, 
-                        "email": assignee.email,
-                    }, 
                     "status": task.status.value, 
-                    "created_at": task.created_at, 
                 }
         except OperationalError as e:
             print(str(e))
@@ -355,13 +366,12 @@ class ProjectService:
                     "id": task.id, 
                     "name": task.name, 
                     "description": task.description, 
-                    "assignee": {
-                        "id": assignee_instance.id, 
-                        "name": assignee_instance.name, 
-                        "email": assignee_instance.email,
-                    }, 
+                    "assignee": assignee_instance.id, 
+                    "assignee_name": assignee_instance.name, 
+                    "assignee_email": assignee_instance.email,
                     "status": task.status.value, 
-                    "created_at": task.created_at, 
+                    "created_at": task.created_at.strftime("%Y-%m-%d %I:%M:%S %p"), 
+                    "project_id": project_id
                 }
         except OperationalError as e:
             print(str(e))
