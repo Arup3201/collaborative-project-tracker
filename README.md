@@ -144,6 +144,8 @@ I have chooses **Python** for building this project because it helps me make the
 - Language: Typescript
 - Framework: ReactJS
 
+I am choosing **Typescript** for type safety instead of JavaScript. It helps me catch bugs faster because of it's compile time errors. IDE gives better autocomplete support. The types serve as good inline documentation. **ReactJS** framework is everywhere and it has excellent dev tools, so I chose this as the frontend framework.
+
 ## Database models
 
 ### User Table
