@@ -165,3 +165,433 @@ I have chooses **Python** for building this project because it helps me make the
 ### Project → Membership (One-to-Many)
 - **Projects** can have multiple **Memberships** (different users)
 - Each **Membership** belongs to exactly one **Project**
+
+## API endpoints
+
+### Authentication endpoints
+
+#### Register user
+
+**Usage**: Create a new user account with email and password authentication
+
+**Rule**: `/api/v1/auth/register`
+
+**Method**: `POST`
+
+**Payload**: 
+```json
+{
+  "username": "string",
+  "email": "string", 
+  "password": "string"
+}
+```
+
+**Response**:
+```json
+{
+  "message": "User registered successfully",
+  "user_id": "string"
+}
+```
+
+**Response Code**: 201
+
+**Errors**:
+- `409` - email already exists
+- `422` - Validation errors
+
+#### Login User
+
+**Usage**: Authenticate user and obtain access token for protected endpoints
+
+**Rule**: `/login`
+
+**Method**: `POST`
+
+**Payload**:
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
+
+**Response**:
+```json
+{
+  "access_token": "string",
+  "user": {
+    "id": "string",
+    "name": "string",
+    "email": "string"
+  }
+}
+```
+
+**Errors**:
+- `400` - Missing email or password
+- `422` - Validation error
+
+### Project Endpoints
+
+#### List Projects
+
+**Usage**: Get all projects that the authenticated user is a member of
+
+**Rule**: `/`
+
+**Method**: `GET`
+
+**Payload**: None (requires authentication header)
+
+**Response**:
+```json
+{
+  "projects": [
+    {
+      "id": "string",
+      "name": "string",
+      "description": "string",
+      "deadline": "datetime",
+      "code": "string",
+      "created_at": "datetime",
+      "role": "Member|Owner"
+    }
+  ]
+}
+```
+
+**Errors**:
+- `401` - Unauthorized (invalid or missing token)
+
+#### Create Project
+
+**Usage**: Create a new project with the authenticated user as owner
+
+**Rule**: `/`
+
+**Method**: `POST`
+
+**Payload**:
+```json
+{
+  "name": "string",
+  "description": "string (optional, defaults to empty)",
+  "deadline": "datetime"
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Project created successfully",
+  "project": {
+    "id": "string",
+    "name": "string",
+    "description": "string",
+    "deadline": "datetime",
+    "code": "string",
+    "created_at": "datetime"
+  }
+}
+```
+
+**Errors**:
+- `400` - Invalid input data
+- `401` - Unauthorized
+- `422` - Validation errors
+
+#### Get Project Details
+
+**Usage**: Retrieve detailed information about a specific project including all tasks
+
+**Rule**: `/<project_id>`
+
+**Method**: `GET`
+
+**Payload**: None (requires authentication header)
+
+**Response**:
+```json
+{
+  "project": {
+    "id": "string",
+    "name": "string",
+    "description": "string",
+    "deadline": "datetime",
+    "code": "string",
+    "created_at": "datetime"
+  },
+  "tasks": [
+    {
+      "id": "string",
+      "name": "string",
+      "description": "string",
+      "assignee": "string",
+      "status": "To Do|In Progress|Completed",
+      "created_at": "datetime"
+    }
+  ]
+}
+```
+
+**Errors**:
+- `404` - Project not found
+- `403` - User not a member of the project
+- `401` - Unauthorized
+
+#### Delete Project
+
+**Usage**: Permanently delete a project (only accessible to project owners)
+
+**Rule**: `/<project_id>`
+
+**Method**: `DELETE`
+
+**Payload**: None (requires authentication header)
+
+**Response**:
+```json
+{
+  "message": "Project deleted successfully"
+}
+```
+
+**Errors**:
+- `404` - Project not found
+- `403` - User not the project owner
+- `401` - Unauthorized
+
+#### Get Project Members
+
+**Usage**: Retrieve list of all members in a specific project with their roles
+
+**Rule**: `/<project_id>/members`
+
+**Method**: `GET`
+
+**Payload**: None (requires authentication header)
+
+**Response**:
+```json
+{
+  "members": [
+    {
+      "user_id": "string",
+      "name": "string",
+      "email": "string",
+      "role": "Member|Owner",
+      "joined_at": "datetime"
+    }
+  ]
+}
+```
+
+**Errors**:
+- `404` - Project not found
+- `403` - User not a member of the project
+- `401` - Unauthorized
+
+#### Join Project by Code
+
+**Usage**: Join an existing project using its unique join code
+
+**Rule**: `/join/code/<project_code>`
+
+**Method**: `POST`
+
+**Payload**: None (requires authentication header)
+
+**Response**:
+```json
+{
+  "message": "Successfully joined project",
+  "project": {
+    "id": "string",
+    "name": "string",
+    "description": "string"
+  }
+}
+```
+
+**Errors**:
+- `404` - Invalid project code
+- `409` - User already a member of the project
+- `401` - Unauthorized
+
+### Task Endpoints
+
+#### Create Task
+
+**Usage**: Create a new task within a specific project
+
+**Rule**: `/<project_id>/tasks/`
+
+**Method**: `POST`
+
+**Payload**:
+```json
+{
+  "name": "string",
+  "description": "string (optional, defaults to empty)",
+  "assignee": "string",
+  "status": "To Do|In Progress|Completed"
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Task created successfully",
+  "task": {
+    "id": "string",
+    "name": "string",
+    "description": "string",
+    "assignee": "string",
+    "status": "To Do",
+    "created_at": "datetime"
+  }
+}
+```
+
+**Errors**:
+- `404` - Project not found
+- `403` - User not a member of the project
+- `400` - Invalid assignee (not a project member)
+- `422` - Validation errors
+- `401` - Unauthorized
+
+#### Get Task Details
+
+**Usage**: Retrieve detailed information about a specific task
+
+**Rule**: `/<project_id>/tasks/<task_id>`
+
+**Method**: `GET`
+
+**Payload**: None (requires authentication header)
+
+**Response**:
+```json
+{
+  "task": {
+    "id": "string",
+    "name": "string",
+    "description": "string",
+    "assignee": "string",
+    "assignee_name": "string",
+    "status": "To Do|In Progress|Completed",
+    "created_at": "datetime",
+    "project_id": "string"
+  }
+}
+```
+
+**Errors**:
+- `404` - Task or project not found
+- `403` - User not a member of the project
+- `401` - Unauthorized
+
+#### Edit Task
+
+**Usage**: Update task details such as name, description, and assignee
+
+**Rule**: `/<project_id>/tasks/<task_id>`
+
+**Method**: `PUT`
+
+**Payload**:
+```json
+{
+  "name": "string (optional, defaults to empty)",
+  "description": "string (optional, defaults to empty)"
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Task updated successfully",
+  "task": {
+    "id": "string",
+    "name": "string",
+    "description": "string",
+    "assignee": "string",
+    "status": "string",
+    "created_at": "datetime"
+  }
+}
+```
+
+**Errors**:
+- `404` - Task or project not found
+- `403` - User not a member of the project
+- `400` - Invalid assignee (not a project member)
+- `422` - Validation errors
+- `401` - Unauthorized
+
+#### Change Task Status
+
+**Usage**: Update the status of a task (To Do, In Progress, Completed)
+
+**Rule**: `/<project_id>/tasks/<task_id>/status`
+
+**Method**: `PUT`
+
+**Payload**:
+```json
+{
+  "status": "To Do|In Progress|Completed"
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Task status updated successfully",
+  "task": {
+    "id": "string",
+    "status": "string"
+  }
+}
+```
+
+**Errors**:
+- `404` - Task or project not found
+- `403` - User not a member of the project
+- `400` - Invalid status value
+- `401` - Unauthorized
+
+#### Change Task Assignee
+
+**Usage**: Reassign a task to a different project member
+
+**Rule**: `/<project_id>/tasks/<task_id>/assign`
+
+**Method**: `PUT`
+
+**Payload**:
+```json
+{
+  "assignee": "string"
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Task assignee updated successfully",
+  "task": {
+    "id": "string",
+    "assignee": "string",
+    "assignee_name": "string"
+  }
+}
+```
+
+**Errors**:
+- `404` - Task or project not found
+- `403` - User not a member of the project
+- `400` - Invalid assignee (not a project member)
+- `401` - Unauthorized
