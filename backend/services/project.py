@@ -106,7 +106,7 @@ class ProjectService:
                             "name": assignee.name, 
                             "email": assignee.email,
                         }, 
-                        "status": task.status, 
+                        "status": task.status.value, 
                         "created_at": task.created_at, 
                     })
 
@@ -203,7 +203,12 @@ class ProjectService:
                     raise NotProjectOwner(f"User with id {user_id} is not the owner of the project with id {project_id}")
                 
                 task_id = generate_id("TASK_")
-                task = Task(id=task_id, name=name, description=description, assignee=assignee, status=status)
+                task = Task(id=task_id, 
+                            name=name, 
+                            description=description, 
+                            assignee=assignee, 
+                            status=status, 
+                            project_id=project_id)
                 session.add(task)
                 session.commit()
 

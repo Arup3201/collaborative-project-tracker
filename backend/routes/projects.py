@@ -533,7 +533,7 @@ projects_blueprint.add_url_rule("/<project_id>/members", endpoint="get-project-m
 
 projects_blueprint.add_url_rule("/join/code/<project_code>", endpoint="join-project", view_func=join_project, methods=["POST"])
 
-projects_blueprint.add_url_rule("/<project_id>/tasks", endpoint="create-project-task", view_func=create_task, methods=["POST"])
+projects_blueprint.add_url_rule("/<project_id>/tasks/", endpoint="create-project-task", view_func=create_task, methods=["POST"])
 projects_blueprint.add_url_rule("/<project_id>/tasks/<task_id>", endpoint="get-task", view_func=get_task, methods=["GET"])
 projects_blueprint.add_url_rule("/<project_id>/tasks/<task_id>", endpoint="edit-project-task", view_func=edit_task, methods=["PUT"])
 projects_blueprint.add_url_rule("/<project_id>/tasks/<task_id>/status", endpoint="change-project-task-status", view_func=change_task_status, methods=["PUT"])
