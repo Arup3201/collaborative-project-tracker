@@ -2,9 +2,13 @@ class BadPayloadError(Exception):
     def __init__(self, message: str):
         super().__init__(message)
 
-class DBError(Exception):
-    def __init__(self, message: str):
-        super().__init__(message)
+class DBOverloadError(Exception):
+    def __init__(self):
+        super().__init__("Too many clients trying to connect with server")
+
+class DBIntegrityError(Exception):
+    def __init__(self):
+        super().__init__("Database integrity violated")
 
 class NotFoundError(Exception):
     def __init__(self, message: str):
