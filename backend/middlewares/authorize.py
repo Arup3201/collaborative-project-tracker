@@ -2,6 +2,7 @@ import json
 from werkzeug.wrappers import Request, Response, ResponseStream
 
 from utils.token import validate_token
+from exceptions.auth import JWTError
 
 class Authorize:
     """
@@ -28,15 +29,14 @@ class Authorize:
             }), mimetype= 'application/json', status=401)
             return res(environ, start_response)
         
-        payload, err = validate_token(token)
-        if err:
+        try:
+            payload = validate_token(token)
+            environ["user"] = payload
+            return self.app(environ, start_response)
+        except JWTError as e:
             res = Response(json.dumps({
                 "message": "Authorization failed", 
-                "details": err, 
+                "details": str(e), 
                 "code": 401
             }), mimetype= 'application/json', status=401)
             return res(environ, start_response)
-        
-        environ["user"] = payload
-        return self.app(environ, start_response)
-        
