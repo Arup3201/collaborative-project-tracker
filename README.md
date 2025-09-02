@@ -44,13 +44,62 @@ cd frontend
 npm install
 ```
 
-### Step 2: Run the frontend
+#### Step 2: Run the frontend
 
 ```sh
 npm run dev
 ```
 
 This should open the frontend at `localhost:5173`
+
+### nginx for CORS
+
+#### Step 1: Update nginx.conf file
+`nginx.conf` file:
+
+```conf
+
+worker_processes  1;
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    sendfile        on;
+    keepalive_timeout  65;
+
+    server {
+        listen       80;
+        server_name  localhost;
+
+        location / {
+            proxy_pass http://localhost:5173;
+        }
+
+        location /api {
+            proxy_pass http://localhost:8000;
+        }
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+    }
+}
+```
+
+#### Step 2: Run nginx
+
+Windows:
+
+```sh
+cd nginx
+start nginx
+```
 
 ## Details
 
@@ -145,24 +194,24 @@ I have chooses **Python** for building this project because it helps me make the
 
 ### Table Relationships
 
-### User ↔ Project (Many-to-Many via Membership)
+#### User ↔ Project (Many-to-Many via Membership)
 - **Users** can be members of multiple **Projects**
 - **Projects** can have multiple **Users** as members
 - Relationship managed through **Membership** table with role-based permissions
 
-### User → Task (One-to-Many)
+#### User → Task (One-to-Many)
 - **Users** can be assigned to multiple **Tasks**
 - Each **Task** has exactly one **User** as assignee
 
-### Project → Task (One-to-Many)
+#### Project → Task (One-to-Many)
 - **Projects** contain multiple **Tasks**
 - Each **Task** belongs to exactly one **Project**
 
-### User → Membership (One-to-Many)
+#### User → Membership (One-to-Many)
 - **Users** can have multiple **Memberships** (different projects)
 - Each **Membership** belongs to exactly one **User**
 
-### Project → Membership (One-to-Many)
+#### Project → Membership (One-to-Many)
 - **Projects** can have multiple **Memberships** (different users)
 - Each **Membership** belongs to exactly one **Project**
 
