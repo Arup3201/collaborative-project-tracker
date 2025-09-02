@@ -72,7 +72,7 @@ def create_project():
                 "errors": errors, 
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
 
     if not payload.name:
         return jsonify({
@@ -81,7 +81,7 @@ def create_project():
                 "details": "Field 'name' in project can't be empty",  
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
     if not payload.deadline:
         return jsonify({
             "error": {
@@ -89,7 +89,7 @@ def create_project():
                 "details": "Field 'deadline' in project can't be empty",  
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
 
     try:
         user = User(**request.environ["user"])
@@ -183,7 +183,7 @@ def get_project(project_id: str):
                 "details": str(e),  
                 "code": "NOT_MEMBER"
             }
-        }), 400
+        }), 403
     except NotFoundError as e:
         return jsonify({
             "error": {
@@ -243,7 +243,7 @@ def get_members(project_id: str):
                 "details": str(e),  
                 "code": "NOT_MEMBER"
             }
-        }), 400
+        }), 403
     except NotFoundError as e:
         return jsonify({
             "error": {
@@ -293,7 +293,7 @@ def delete_project(project_id: str):
     try:
         ProjectService().delete_project(project_id=project_id, user_id=user_payload.id)
         return jsonify({
-            "message": "project deleted", 
+            "message": "Project deleted", 
         })
     except NotProjectMemberError as e:
         return jsonify({
@@ -302,7 +302,7 @@ def delete_project(project_id: str):
                 "details": str(e),  
                 "code": "NOT_MEMBER"
             }
-        }), 400
+        }), 403
     except NotProjectOwner as e:
         return jsonify({
             "error": {
@@ -310,7 +310,7 @@ def delete_project(project_id: str):
                 "details": str(e),  
                 "code": "NOT_OWNER"
             }
-        }), 400
+        }), 403
     except NotFoundError as e:
         return jsonify({
             "error": {
@@ -369,15 +369,7 @@ def join_project(project_code: str):
                 "details": str(e),  
                 "code": "ALREADY_MEMBER"
             }
-        }), 400
-    except NotProjectMemberError as e:
-        return jsonify({
-            "error": {
-                "message": "User is not a project member",
-                "details": str(e),  
-                "code": "NOT_MEMBER"
-            }
-        }), 400
+        }), 409
     except NotFoundError as e:
         return jsonify({
             "error": {
@@ -423,7 +415,7 @@ def create_task(project_id: str):
                 "errors": errors, 
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
 
     if not payload.name:
         return jsonify({
@@ -432,7 +424,7 @@ def create_task(project_id: str):
                 "details": "Field 'name' in task can't be empty",  
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
     if not payload.assignee:
         return jsonify({
             "error": {
@@ -440,7 +432,7 @@ def create_task(project_id: str):
                 "details": "Field 'assignee' in task can't be empty",  
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
 
     try:
         user_payload = User(**request.environ["user"])
@@ -478,7 +470,7 @@ def create_task(project_id: str):
                 "details": str(e),  
                 "code": "NOT_MEMBER"
             }
-        }), 400
+        }), 403
     except NotProjectOwner as e:
         return jsonify({
             "error": {
@@ -486,7 +478,7 @@ def create_task(project_id: str):
                 "details": str(e),  
                 "code": "NOT_OWNER"
             }
-        }), 400
+        }), 403
     except NotFoundError as e:
         return jsonify({
             "error": {
@@ -547,7 +539,7 @@ def get_task(project_id: str, task_id: str):
                 "details": str(e),  
                 "code": "NOT_MEMBER"
             }
-        }), 400
+        }), 403
     except NotFoundError as e:
         return jsonify({
             "error": {
@@ -593,7 +585,7 @@ def edit_task(project_id: str, task_id: str):
                 "errors": errors, 
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
 
     if not payload.name and not payload.description:
         return jsonify({
@@ -602,7 +594,7 @@ def edit_task(project_id: str, task_id: str):
                 "details": "Atleadt one field among 'name' and 'description' need to be present",  
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
 
     try:
         user_payload = User(**request.environ["user"])
@@ -640,7 +632,7 @@ def edit_task(project_id: str, task_id: str):
                 "details": str(e),  
                 "code": "NOT_MEMBER"
             }
-        }), 400
+        }), 403
     except NotTaskAssigneeError as e:
         return jsonify({
             "error": {
@@ -648,7 +640,7 @@ def edit_task(project_id: str, task_id: str):
                 "details": str(e),  
                 "code": "NOT_ASSIGNEE"
             }
-        }), 400
+        }), 403
     except NotFoundError as e:
         return jsonify({
             "error": {
@@ -694,7 +686,7 @@ def change_task_status(project_id: str, task_id: str):
                 "errors": errors, 
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
 
     if not payload.status:
         return jsonify({
@@ -703,7 +695,7 @@ def change_task_status(project_id: str, task_id: str):
                 "details": "Field required 'status'",  
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
 
     try:
         user_payload = User(**request.environ["user"])
@@ -740,7 +732,7 @@ def change_task_status(project_id: str, task_id: str):
                 "details": str(e),  
                 "code": "NOT_MEMBER"
             }
-        }), 400
+        }), 403
     except NotTaskAssigneeError as e:
         return jsonify({
             "error": {
@@ -748,7 +740,7 @@ def change_task_status(project_id: str, task_id: str):
                 "details": str(e),  
                 "code": "NOT_ASSIGNEE"
             }
-        }), 400
+        }), 403
     except NotFoundError as e:
         return jsonify({
             "error": {
@@ -794,7 +786,7 @@ def change_assignee(project_id: str, task_id: str):
                 "errors": errors, 
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
 
     if not payload.assignee:
         return jsonify({
@@ -803,7 +795,7 @@ def change_assignee(project_id: str, task_id: str):
                 "details": "Field required 'assignee'",  
                 "code": "BAD_REQUEST"
             }
-        }), 400
+        }), 422
 
     try:
         user_payload = User(**request.environ["user"])
@@ -840,7 +832,7 @@ def change_assignee(project_id: str, task_id: str):
                 "details": str(e),  
                 "code": "NOT_OWNER"
             }
-        }), 400
+        }), 403
     except NotProjectMemberError as e:
         return jsonify({
             "error": {
@@ -848,7 +840,7 @@ def change_assignee(project_id: str, task_id: str):
                 "details": str(e),  
                 "code": "NOT_MEMBER"
             }
-        }), 400
+        }), 403
     except NotFoundError as e:
         return jsonify({
             "error": {
