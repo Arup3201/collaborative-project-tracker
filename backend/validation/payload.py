@@ -19,6 +19,16 @@ class CreateProjectPayload(BaseModel):
 
 class CreateTaskPayload(BaseModel):
     name: str
-    description: str
+    description: str = ""
     assignee: str
     status: TaskStatus
+
+class EditTaskPayload(BaseModel):
+    name: str = ""
+    description: str = ""
+
+class ChangeStatusPayload(BaseModel):
+    status: TaskStatus
+
+class ChangeAssigneePayload(BaseModel):
+    assignee: str
