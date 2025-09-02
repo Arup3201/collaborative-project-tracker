@@ -2,33 +2,36 @@ import jwt
 from datetime import datetime, timedelta, timezone
 
 from config import Env
+from exceptions import JWTError
 
-TOKEN_EXIRES = datetime.now(tz=timezone.utc)+timedelta(seconds=30)
+TOKEN_NAME = "COLLAB_TOKEN"
+TOKEN_EXIRES = datetime.now(tz=timezone.utc)+timedelta(minutes=30)
 
-def generate_token(payload: dict) -> tuple[str, str|None]:
+def generate_token(payload: dict):
     try:
         token = jwt.encode(payload={
             **payload, 
             "exp": TOKEN_EXIRES, 
             }, key=Env.SECRET_KEY, algorithm="HS256")
-        return token, None
+        return token
     except jwt.exceptions.InvalidKeyError:
-        return "", "encoding key is invalid"
+        raise JWTError("Provided key for JWT encoding is invalid")
     except Exception as e:
-        print(str(e))
-        return "", "unknown error while encoding jwt token"
+        print(e)
+        raise JWTError("Something went wrong while encoding JWT")
 
-def validate_token(token: str) -> tuple[dict, str|None]:
+def validate_token(token: str):
     try:
         payload = jwt.decode(jwt=token, key=Env.SECRET_KEY, algorithms="HS256")
-        return payload, None
+        return payload
     except jwt.exceptions.ExpiredSignatureError:
-        return dict(), "jwt token signature expired"
+        raise JWTError("JWT token signature has expired")
     except jwt.exceptions.InvalidSignatureError:
-        return dict(), "jwt token signature invalid"
+        raise JWTError("JWT token signature is invalid") 
     except jwt.exceptions.InvalidTokenError:
-        return dict(), "jwt token invalid"
+        raise JWTError("JWT token is invalid") 
     except jwt.exceptions.InvalidKeyError:
-        return dict(), "decoding key is invalid"
-    except Exception:
-        return dict(), "unknown error while decoding jwt token"
+        raise JWTError("JWT token decoding key is invalid") 
+    except Exception as e:
+        print(e)
+        raise JWTError("Something went wrong while decoding JWT") 
