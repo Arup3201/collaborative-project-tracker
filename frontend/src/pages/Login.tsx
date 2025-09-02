@@ -15,6 +15,8 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
+import { HttpPost } from "@/utils/http";
+
 interface LoginFormData {
   email: string;
   password: string;
@@ -61,11 +63,11 @@ const Login: React.FC = () => {
     }
 
     try {
-      // TODO: Replace with your actual login API call
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
-
-      console.log("Login data:", formData);
-      // Handle successful login (redirect, store token, etc.)
+      const response = await HttpPost("/auth/login", {
+        "email": formData.email, 
+        "password": formData.password
+      })
+      console.log("Login data: ", response.user);
     } catch (err) {
       setError("Invalid email or password. Please try again.");
     } finally {
