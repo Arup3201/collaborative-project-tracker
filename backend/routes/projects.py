@@ -70,7 +70,7 @@ def create_project():
                 "message": "Input validation failed",
                 "details": "Please make sure your input has required fields with their correct type",  
                 "errors": errors, 
-                "code": "BAD_REQUEST"
+                "code": "INVALID_INPUT"
             }
         }), 422
 
@@ -81,7 +81,7 @@ def create_project():
                 "details": "Field 'name' in project can't be empty",  
                 "code": "BAD_REQUEST"
             }
-        }), 422
+        }), 400
     if not payload.deadline:
         return jsonify({
             "error": {
@@ -89,7 +89,7 @@ def create_project():
                 "details": "Field 'deadline' in project can't be empty",  
                 "code": "BAD_REQUEST"
             }
-        }), 422
+        }), 400
 
     try:
         user = User(**request.environ["user"])
@@ -113,8 +113,8 @@ def create_project():
     try:
         project = ProjectService().create_projects(name=payload.name, description=payload.description, deadline=payload.deadline, user_id=user.id)
         return jsonify({
-            "message": "Project created", 
-            "data": project, 
+            "message": "Project created successfully", 
+            "project": project, 
         }), 201
     except NotFoundError as e:
         return jsonify({
@@ -171,10 +171,11 @@ def get_project(project_id: str):
         }), 500
     
     try:
-        project_details = ProjectService().get_project(project_id=project_id, user_id=user_payload.id)
+        project = ProjectService().get_project(project_id=project_id, user_id=user_payload.id)
+        tasks = ProjectService().get_tasks(project_id=project_id, user_id=user_payload.id)
         return jsonify({
-            "message": f"project {project_id} fetched", 
-            "data": project_details
+            "project": project, 
+            "tasks": tasks
         })
     except NotProjectMemberError as e:
         return jsonify({
@@ -233,8 +234,7 @@ def get_members(project_id: str):
     try:
         members, err = ProjectService().get_members(project_id=project_id, user_id=user_payload.id)
         return jsonify({
-            "message": "members fetched", 
-            "data": members
+            "members": members
         })
     except NotProjectMemberError as e:
         return jsonify({
@@ -293,7 +293,7 @@ def delete_project(project_id: str):
     try:
         ProjectService().delete_project(project_id=project_id, user_id=user_payload.id)
         return jsonify({
-            "message": "Project deleted", 
+            "message": "Project deleted successfully"
         })
     except NotProjectMemberError as e:
         return jsonify({
@@ -358,9 +358,10 @@ def join_project(project_code: str):
         }), 500
 
     try:
-        ProjectService().join_project(project_code=project_code, user_id=user_payload.id)
+        data = ProjectService().join_project(project_code=project_code, user_id=user_payload.id)
         return jsonify({
-            "message": "You have joined the project as a member", 
+            "message": "Successfully joined project", 
+            "project": data
         })
     except AlreadyExistError as e:
         return jsonify({
@@ -413,7 +414,7 @@ def create_task(project_id: str):
                 "message": "Input validation failed",
                 "details": "Please make sure your input has required fields with their correct type",  
                 "errors": errors, 
-                "code": "BAD_REQUEST"
+                "code": "INVALID_INPUT"
             }
         }), 422
 
@@ -424,7 +425,15 @@ def create_task(project_id: str):
                 "details": "Field 'name' in task can't be empty",  
                 "code": "BAD_REQUEST"
             }
-        }), 422
+        }), 400
+    if not payload.status:
+        return jsonify({
+            "error": {
+                "message": "Invalid task status",
+                "details": "Field 'status' in task can't be empty",  
+                "code": "BAD_REQUEST"
+            }
+        }), 400
     if not payload.assignee:
         return jsonify({
             "error": {
@@ -432,7 +441,7 @@ def create_task(project_id: str):
                 "details": "Field 'assignee' in task can't be empty",  
                 "code": "BAD_REQUEST"
             }
-        }), 422
+        }), 400
 
     try:
         user_payload = User(**request.environ["user"])
@@ -454,14 +463,15 @@ def create_task(project_id: str):
         }), 500
 
     try:
-        ProjectService().create_task(name=payload.name, 
+        task = ProjectService().create_task(name=payload.name, 
                                      description=payload.description, 
                                      assignee=payload.assignee, 
                                      status=payload.status, 
                                      project_id=project_id, 
                                      user_id=user_payload.id)
         return jsonify({
-            "message": "Task is created", 
+            "message": "Task created successfully", 
+            "task": task 
         }), 201
     except NotProjectMemberError as e:
         return jsonify({
@@ -529,8 +539,7 @@ def get_task(project_id: str, task_id: str):
                                          project_id=project_id, 
                                          user_id=user_payload.id)
         return jsonify({
-            "message": "Task fetched",
-            "data": task 
+            "task": task 
         })
     except NotProjectMemberError as e:
         return jsonify({
@@ -594,7 +603,7 @@ def edit_task(project_id: str, task_id: str):
                 "details": "Atleadt one field among 'name' and 'description' need to be present",  
                 "code": "BAD_REQUEST"
             }
-        }), 422
+        }), 400
 
     try:
         user_payload = User(**request.environ["user"])
@@ -622,8 +631,8 @@ def edit_task(project_id: str, task_id: str):
                                    project_id=project_id, 
                                    user_id=user_payload.id)
         return jsonify({
-            "message": "Task values have been edited", 
-            "data": edited_task
+            "message": "Task updated successfully", 
+            "task": edited_task
         })
     except NotProjectMemberError as e:
         return jsonify({
@@ -717,13 +726,13 @@ def change_task_status(project_id: str, task_id: str):
         }), 500
 
     try:
-        edited_task = ProjectService().change_status(task_id=task_id, 
+        data = ProjectService().change_status(task_id=task_id, 
                                    status=payload.status, 
                                    project_id=project_id, 
                                    user_id=user_payload.id)
         return jsonify({
-            "message": "Task status modified", 
-            "data": edited_task
+            "message": "Task status updated successfully", 
+            "task": data
         })
     except NotProjectMemberError as e:
         return jsonify({
@@ -817,13 +826,13 @@ def change_assignee(project_id: str, task_id: str):
         }), 500
 
     try:
-        edited_task = ProjectService().change_assignee(task_id=task_id, 
+        data = ProjectService().change_assignee(task_id=task_id, 
                                    assignee=payload.assignee, 
                                    project_id=project_id, 
                                    user_id=user_payload.id)
         return jsonify({
-            "message": "Task values have been edited", 
-            "data": edited_task
+            "message": "Task assignee updated successfully", 
+            "task": data
         })
     except NotProjectOwner as e:
         return jsonify({
