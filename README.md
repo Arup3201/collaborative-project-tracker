@@ -239,7 +239,7 @@ I have chooses **Python** for building this project because it helps me make the
 
 **Usage**: Get all projects that the authenticated user is a member of
 
-**Rule**: `/`
+**Rule**: `/api/v1/projects/`
 
 **Method**: `GET`
 
@@ -255,8 +255,8 @@ I have chooses **Python** for building this project because it helps me make the
       "description": "string",
       "deadline": "datetime",
       "code": "string",
-      "created_at": "datetime",
-      "role": "Member|Owner"
+      "role": "Member|Owner", 
+      "created_at": "str(format: 2025-09-02 09:20 PM)"
     }
   ]
 }
@@ -264,12 +264,13 @@ I have chooses **Python** for building this project because it helps me make the
 
 **Errors**:
 - `401` - Unauthorized (invalid or missing token)
+- `500` - Server error (code logic problem)
 
 #### Create Project
 
 **Usage**: Create a new project with the authenticated user as owner
 
-**Rule**: `/`
+**Rule**: `/api/v1/projects/`
 
 **Method**: `POST`
 
@@ -292,21 +293,25 @@ I have chooses **Python** for building this project because it helps me make the
     "description": "string",
     "deadline": "datetime",
     "code": "string",
-    "created_at": "datetime"
+    "created_at": "str(format: 2025-09-02 09:20 PM)"
   }
 }
 ```
 
+**Response Code**: 201
+
 **Errors**:
 - `400` - Invalid input data
 - `401` - Unauthorized
+- `404` - Invalid user
 - `422` - Validation errors
+- `500` - Server error (code logic error)
 
 #### Get Project Details
 
 **Usage**: Retrieve detailed information about a specific project including all tasks
 
-**Rule**: `/<project_id>`
+**Rule**: `/api/v1/projects/<project_id>`
 
 **Method**: `GET`
 
@@ -321,7 +326,7 @@ I have chooses **Python** for building this project because it helps me make the
     "description": "string",
     "deadline": "datetime",
     "code": "string",
-    "created_at": "datetime"
+    "created_at": "str(format: 2025-09-02 09:20 PM)"
   },
   "tasks": [
     {
@@ -329,9 +334,12 @@ I have chooses **Python** for building this project because it helps me make the
       "name": "string",
       "description": "string",
       "assignee": "string",
+      "assignee_name": "string",
+      "assignee_email": "string",
       "status": "To Do|In Progress|Completed",
-      "created_at": "datetime"
-    }
+      "created_at": "str(format: 2025-09-02 09:20 PM)"
+    }, 
+    // ...
   ]
 }
 ```
@@ -340,12 +348,13 @@ I have chooses **Python** for building this project because it helps me make the
 - `404` - Project not found
 - `403` - User not a member of the project
 - `401` - Unauthorized
+- `500` - Server error (code logic error)
 
 #### Delete Project
 
 **Usage**: Permanently delete a project (only accessible to project owners)
 
-**Rule**: `/<project_id>`
+**Rule**: `/api/v1/projects/<project_id>`
 
 **Method**: `DELETE`
 
@@ -362,12 +371,13 @@ I have chooses **Python** for building this project because it helps me make the
 - `404` - Project not found
 - `403` - User not the project owner
 - `401` - Unauthorized
+- `500` - Server error (code logic error)
 
 #### Get Project Members
 
 **Usage**: Retrieve list of all members in a specific project with their roles
 
-**Rule**: `/<project_id>/members`
+**Rule**: `/api/v1/projects/<project_id>/members`
 
 **Method**: `GET`
 
@@ -382,8 +392,9 @@ I have chooses **Python** for building this project because it helps me make the
       "name": "string",
       "email": "string",
       "role": "Member|Owner",
-      "joined_at": "datetime"
-    }
+      "joined_at": "str(format: 2025-09-02 09:20 PM)"
+    }, 
+    // ...
   ]
 }
 ```
@@ -392,12 +403,13 @@ I have chooses **Python** for building this project because it helps me make the
 - `404` - Project not found
 - `403` - User not a member of the project
 - `401` - Unauthorized
+- `500` - Server error (code logic error)
 
 #### Join Project by Code
 
 **Usage**: Join an existing project using its unique join code
 
-**Rule**: `/join/code/<project_code>`
+**Rule**: `/api/v1/projects/join/code/<project_code>`
 
 **Method**: `POST`
 
@@ -419,6 +431,7 @@ I have chooses **Python** for building this project because it helps me make the
 - `404` - Invalid project code
 - `409` - User already a member of the project
 - `401` - Unauthorized
+- `500` - Server error (code logic error)
 
 ### Task Endpoints
 
@@ -426,7 +439,7 @@ I have chooses **Python** for building this project because it helps me make the
 
 **Usage**: Create a new task within a specific project
 
-**Rule**: `/<project_id>/tasks/`
+**Rule**: `/api/v1/projects/<project_id>/tasks/`
 
 **Method**: `POST`
 
@@ -450,7 +463,7 @@ I have chooses **Python** for building this project because it helps me make the
     "description": "string",
     "assignee": "string",
     "status": "To Do",
-    "created_at": "datetime"
+    "created_at": "str(format: 2025-09-02 09:20 PM)"
   }
 }
 ```
@@ -458,15 +471,16 @@ I have chooses **Python** for building this project because it helps me make the
 **Errors**:
 - `404` - Project not found
 - `403` - User not a member of the project
-- `400` - Invalid assignee (not a project member)
+- `400` - Invalid name/assignee/status (not a project member)
 - `422` - Validation errors
 - `401` - Unauthorized
+- `500` - Server error (code logic error)
 
 #### Get Task Details
 
 **Usage**: Retrieve detailed information about a specific task
 
-**Rule**: `/<project_id>/tasks/<task_id>`
+**Rule**: `/api/v1/projects/<project_id>/tasks/<task_id>`
 
 **Method**: `GET`
 
@@ -482,7 +496,7 @@ I have chooses **Python** for building this project because it helps me make the
     "assignee": "string",
     "assignee_name": "string",
     "status": "To Do|In Progress|Completed",
-    "created_at": "datetime",
+    "created_at": "str(format: 2025-09-02 09:20 PM)",
     "project_id": "string"
   }
 }
@@ -492,12 +506,13 @@ I have chooses **Python** for building this project because it helps me make the
 - `404` - Task or project not found
 - `403` - User not a member of the project
 - `401` - Unauthorized
+- `500` - Server error (code logic error)
 
 #### Edit Task
 
 **Usage**: Update task details such as name, description, and assignee
 
-**Rule**: `/<project_id>/tasks/<task_id>`
+**Rule**: `/api/v1/projects/<project_id>/tasks/<task_id>`
 
 **Method**: `PUT`
 
@@ -518,8 +533,10 @@ I have chooses **Python** for building this project because it helps me make the
     "name": "string",
     "description": "string",
     "assignee": "string",
+    "assignee_name": "string",
+    "assignee_email": "string",
     "status": "string",
-    "created_at": "datetime"
+    "created_at": "str(format: 2025-09-02 09:20 PM)"
   }
 }
 ```
@@ -530,12 +547,13 @@ I have chooses **Python** for building this project because it helps me make the
 - `400` - Invalid assignee (not a project member)
 - `422` - Validation errors
 - `401` - Unauthorized
+- `500` - Server error (code logic error)
 
 #### Change Task Status
 
 **Usage**: Update the status of a task (To Do, In Progress, Completed)
 
-**Rule**: `/<project_id>/tasks/<task_id>/status`
+**Rule**: `/api/v1/projects/<project_id>/tasks/<task_id>/status`
 
 **Method**: `PUT`
 
@@ -562,12 +580,13 @@ I have chooses **Python** for building this project because it helps me make the
 - `403` - User not a member of the project
 - `400` - Invalid status value
 - `401` - Unauthorized
+- `500` - Server error (code logic error)
 
 #### Change Task Assignee
 
 **Usage**: Reassign a task to a different project member
 
-**Rule**: `/<project_id>/tasks/<task_id>/assign`
+**Rule**: `/api/v1/projects/<project_id>/tasks/<task_id>/assign`
 
 **Method**: `PUT`
 
@@ -595,3 +614,4 @@ I have chooses **Python** for building this project because it helps me make the
 - `403` - User not a member of the project
 - `400` - Invalid assignee (not a project member)
 - `401` - Unauthorized
+- `500` - Server error (code logic error)
