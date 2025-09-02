@@ -52,6 +52,55 @@ npm run dev
 
 This should open the frontend at `localhost:5173`
 
+### nginx for CORS
+
+#### Step 1: Update nginx.conf file
+`nginx.conf` file:
+
+```conf
+
+worker_processes  1;
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    sendfile        on;
+    keepalive_timeout  65;
+
+    server {
+        listen       80;
+        server_name  localhost;
+
+        location / {
+            proxy_pass http://localhost:5173;
+        }
+
+        location /api {
+            proxy_pass http://localhost:8000;
+        }
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+    }
+}
+```
+
+#### Step 2: Run nginx
+
+Windows:
+
+```sh
+cd nginx
+start nginx
+```
+
 ## Details
 
 Collaborative project management web app where users can -
