@@ -44,7 +44,7 @@ def list_projects():
             }
         }), 500
     except Exception as e:
-        print(e)
+        print(str(e))
         return jsonify({
             "error": {
                 "message": "Unknown server error occured",
