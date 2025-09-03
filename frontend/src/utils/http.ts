@@ -1,4 +1,4 @@
-const URL_ROOT = window.location + "api/v1";
+const URL_ROOT = window.location.origin + "/api/v1";
 
 const HttpGet = async (resource: string) => {
   try {
