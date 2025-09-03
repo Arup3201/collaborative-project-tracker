@@ -47,6 +47,7 @@ import { HttpGet, HttpPost } from "@/utils/http";
 
 import type { Project as ProjectType } from "@/types/project";
 import type { Task, TeamMember, NewTaskData, TaskStatus } from "@/types/task";
+import type { MemberResponse, TaskResponse } from "@/types/response";
 
 const Project: React.FC = () => {
   const { id: project_id } = useParams();
@@ -64,7 +65,17 @@ const Project: React.FC = () => {
       setProject({
         ...data.project,
       });
-      setTasks([...data.tasks]);
+      setTasks(() => data.tasks.map((task: TaskResponse) => ({
+        id: task.id, 
+        name: task.name, 
+        description: task.description, 
+        status: task.status, 
+        assignee: {
+          id: task.assignee, 
+          name: task.assignee_name, 
+          email: task.assignee_email
+        }
+      })));
     } catch (err) {
       console.error(`getProject failed: ${err}`);
     } finally {
@@ -75,7 +86,7 @@ const Project: React.FC = () => {
     try {
       const data = await HttpGet(`/projects/${projectId}/members`);
       setTeamMembers(() =>
-        data.members.map((member) => ({
+        data.members.map((member: MemberResponse) => ({
           id: member.user_id,
           email: member.email,
           name: member.name,

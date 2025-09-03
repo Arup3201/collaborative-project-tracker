@@ -1,3 +1,5 @@
+export type ProjectRole = "Owner" | "Memeber"
+
 export interface Project {
   id: string;
   name: string;
