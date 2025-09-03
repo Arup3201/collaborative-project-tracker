@@ -9,17 +9,19 @@ interface UserData {
 }
 
 interface AuthData {
-  isAuthenticated: boolean;
   isLoading: boolean;
+  isAuthenticated: boolean;
+  setIsAuthenticated: (_: boolean) => void, 
   user: UserData | undefined;
-  setAuth: (user: UserData, isAuthenticated: boolean) => void;
+  setUser: (_: UserData) => void
 }
 
 const AuthContext = createContext<AuthData>({
-  isAuthenticated: false,
   isLoading: false,
+  isAuthenticated: false,
+  setIsAuthenticated: (_: boolean) => {}, 
   user: {} as UserData,
-  setAuth: () => {},
+  setUser: (_: UserData) => {}
 });
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -52,17 +54,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     getUser();
   }, []);
 
-  const setAuth = (user: UserData, isAuthenticated: boolean) => {
-    setUser({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    });
-    setIsAuthenticated(isAuthenticated);
-  };
-
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, setAuth, isLoading }}>
+    <AuthContext.Provider value={{ user, setUser, isAuthenticated, setIsAuthenticated, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

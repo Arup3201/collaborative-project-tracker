@@ -25,7 +25,7 @@ interface LoginFormData {
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, setAuth } = useAuth();
+  const { isAuthenticated, setIsAuthenticated, setUser } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -75,8 +75,12 @@ const Login: React.FC = () => {
         email: formData.email,
         password: formData.password,
       });
-      setAuth(response.data, true)
-      navigate("/")
+      setUser({
+        id: response.user.id, 
+        name: response.user.name, 
+        email: response.user.email
+      })
+      setIsAuthenticated(true)
     } catch (err) {
       setError("Invalid email or password. Please try again.");
     } finally {
