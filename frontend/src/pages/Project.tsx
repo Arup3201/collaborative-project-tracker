@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,24 +33,24 @@ import {
   Plus,
   Edit,
   Trash2,
-  Eye,
   UserPlus,
   User,
   Clock,
   CheckCircle2,
   Circle,
-  MoreHorizontal,
   Loader2,
 } from "lucide-react";
 
 import { HttpGet, HttpPost } from "@/utils/http";
+import useAuth from "@/hooks/auth";
 
-import type { Project as ProjectType } from "@/types/project";
+import type { ProjectRole, Project as ProjectType } from "@/types/project";
 import type { Task, TeamMember, NewTaskData, TaskStatus } from "@/types/task";
 import type { MemberResponse, TaskResponse } from "@/types/response";
 
 const Project: React.FC = () => {
   const { id: project_id } = useParams();
+  const { user } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -58,24 +58,33 @@ const Project: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
+  const [projectRole, setProjectRole] = useState<ProjectRole>();
+
   const getProject = async (projectId: string) => {
     setIsLoading(true);
     try {
       const data = await HttpGet(`/projects/${projectId}`);
       setProject({
-        ...data.project,
+        id: data.project.id,
+        name: data.project.name,
+        description: data.project.description,
+        deadline: data.project.deadline,
+        code: data.project.code,
       });
-      setTasks(() => data.tasks.map((task: TaskResponse) => ({
-        id: task.id, 
-        name: task.name, 
-        description: task.description, 
-        status: task.status, 
-        assignee: {
-          id: task.assignee, 
-          name: task.assignee_name, 
-          email: task.assignee_email
-        }
-      })));
+      setProjectRole(data.project.role);
+      setTasks(() =>
+        data.tasks.map((task: TaskResponse) => ({
+          id: task.id,
+          name: task.name,
+          description: task.description,
+          status: task.status,
+          assignee: {
+            id: task.assignee,
+            name: task.assignee_name,
+            email: task.assignee_email,
+          },
+        }))
+      );
     } catch (err) {
       console.error(`getProject failed: ${err}`);
     } finally {
@@ -115,16 +124,6 @@ const Project: React.FC = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [createError, setCreateError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState<{
-    [key: string]: boolean;
-  }>({});
-
-  const toggleDropdown = (taskId: string) => {
-    setIsDropdownOpen((prev) => ({
-      ...prev,
-      [taskId]: !prev[taskId],
-    }));
-  };
 
   const handleCreateTask = async () => {
     setCreateError("");
@@ -221,7 +220,7 @@ const Project: React.FC = () => {
         color: "bg-blue-100 text-blue-800",
         icon: <Clock className="w-3 h-3" />,
       },
-      Done: {
+      Completed: {
         color: "bg-green-100 text-green-800",
         icon: <CheckCircle2 className="w-3 h-3" />,
       },
@@ -240,108 +239,89 @@ const Project: React.FC = () => {
   // TanStack Table setup
   const columnHelper = createColumnHelper<Task>();
 
-  const columns = useMemo(
-    () => [
-      columnHelper.accessor("name", {
-        header: "Task Name",
-        cell: (info) => <div className="font-medium">{info.getValue()}</div>,
-      }),
-      columnHelper.accessor("description", {
-        header: "Description",
-        cell: (info) => (
-          <span className="text-stone-600" title={info.getValue()}>
-            {truncateDescription(info.getValue())}
-          </span>
-        ),
-      }),
-      columnHelper.accessor("assignee", {
-        header: "Assignee",
-        cell: (info) => (
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-stone-400" />
-            {info.getValue().name}
-          </div>
-        ),
-      }),
-      columnHelper.accessor("status", {
-        header: "Status",
-        cell: (info) => getStatusBadge(info.getValue()),
-      }),
-      columnHelper.display({
-        id: "actions",
-        header: "Actions",
-        cell: (info) => (
-          <div className="relative text-right">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => toggleDropdown(info.row.original.id)}
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-
-            {isDropdownOpen[info.row.original.id] && (
-              <div className="top-full right-0 z-50 absolute bg-white shadow-lg mt-1 border border-stone-200 rounded-md min-w-32">
-                <div
-                  onClick={() => {
-                    handleViewTask(info.row.original.id);
-                    setIsDropdownOpen((prev) => ({
-                      ...prev,
-                      [info.row.original.id]: false,
-                    }));
-                  }}
-                  className="flex items-center hover:bg-stone-100 px-2 py-2 text-sm cursor-pointer"
-                >
-                  <Eye className="mr-2 w-4 h-4" />
-                  View Task
-                </div>
-                <div
-                  onClick={() => {
-                    handleEditTask(info.row.original.id);
-                    setIsDropdownOpen((prev) => ({
-                      ...prev,
-                      [info.row.original.id]: false,
-                    }));
-                  }}
-                  className="flex items-center hover:bg-stone-100 px-2 py-2 text-sm cursor-pointer"
-                >
-                  <Edit className="mr-2 w-4 h-4" />
-                  Edit
-                </div>
-                <div
-                  onClick={() => {
-                    handleAssignTask(info.row.original.id);
-                    setIsDropdownOpen((prev) => ({
-                      ...prev,
-                      [info.row.original.id]: false,
-                    }));
-                  }}
-                  className="flex items-center hover:bg-stone-100 px-2 py-2 text-sm cursor-pointer"
-                >
-                  <UserPlus className="mr-2 w-4 h-4" />
-                  Assign
-                </div>
-                <div
-                  onClick={() => {
-                    handleDeleteTask(info.row.original.id);
-                    setIsDropdownOpen((prev) => ({
-                      ...prev,
-                      [info.row.original.id]: false,
-                    }));
-                  }}
-                  className="flex items-center hover:bg-stone-100 px-2 py-2 text-red-600 text-sm cursor-pointer"
-                >
-                  <Trash2 className="mr-2 w-4 h-4" />
-                  Delete
-                </div>
-              </div>
-            )}
-          </div>
-        ),
-      }),
-    ],
-    [isDropdownOpen]
-  );
+  const columns = [
+    columnHelper.accessor("name", {
+      header: "Task Name",
+      cell: (info) => <div className="font-medium">{info.getValue()}</div>,
+    }),
+    columnHelper.accessor("description", {
+      header: "Description",
+      cell: (info) => (
+        <span className="text-stone-600" title={info.getValue()}>
+          {truncateDescription(info.getValue())}
+        </span>
+      ),
+    }),
+    columnHelper.accessor("assignee", {
+      header: "Assignee",
+      cell: (info) => (
+        <div className="flex items-center gap-2">
+          <User className="w-4 h-4 text-stone-400" />
+          {info.getValue().name}
+        </div>
+      ),
+    }),
+    columnHelper.accessor("status", {
+      header: "Status",
+      cell: (info) => getStatusBadge(info.getValue()),
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: (info) => (
+        <div className="flex justify-center gap-1">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              if (
+                projectRole !== "Owner" &&
+                user?.id !== info.row.original.assignee.id
+              ) {
+                // user is not the owner or the assignee
+                return;
+              }
+              handleEditTask(info.row.original.id);
+            }}
+            disabled={
+              projectRole !== "Owner" &&
+              user?.id !== info.row.original.assignee.id
+            }
+            className="cursor-pointer"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              if (projectRole !== "Owner") {
+                // user is not the owner
+                return;
+              }
+              handleAssignTask(info.row.original.id);
+            }}
+            className="cursor-pointer"
+            disabled={projectRole !== "Owner"}
+          >
+            <UserPlus className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              if (projectRole !== "Owner") {
+                // user is not the owner
+                return;
+              }
+              handleDeleteTask(info.row.original.id);
+            }}
+            className="text-destructive hover:text-red-600 cursor-pointer"
+            disabled={projectRole !== "Owner"}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      ),
+    }),
+  ];
 
   const table = useReactTable({
     data: tasks,
@@ -504,11 +484,14 @@ const Project: React.FC = () => {
                 <table className="w-full text-sm caption-bottom">
                   <thead className="[&_tr]:border-b">
                     {table.getHeaderGroups().map((headerGroup) => (
-                      <tr key={headerGroup.id}>
+                      <tr
+                        key={headerGroup.id}
+                        className="[&_th:last-child]:border-r-0"
+                      >
                         {headerGroup.headers.map((header) => (
                           <th
                             key={header.id}
-                            className="px-4 h-12 font-medium text-stone-500 text-left align-middle"
+                            className="px-4 border-r-1 h-12 font-medium text-stone-500 text-center align-middle b"
                           >
                             {header.isPlaceholder
                               ? null
@@ -525,10 +508,13 @@ const Project: React.FC = () => {
                     {table.getRowModel().rows.map((row) => (
                       <tr
                         key={row.id}
-                        className="hover:bg-stone-50 border-b transition-colors"
+                        className="hover:bg-stone-50 [&_td:last-child]:border-r-0 border-b transition-colors"
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} className="p-4 align-middle">
+                          <td
+                            key={cell.id}
+                            className="p-4 border-r-1 align-middle"
+                          >
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext()

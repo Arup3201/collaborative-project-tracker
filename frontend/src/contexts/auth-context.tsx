@@ -6,26 +6,25 @@ import type { User } from "@/types/user";
 interface AuthData {
   isLoading: boolean;
   isAuthenticated: boolean;
-  setIsAuthenticated: (_: boolean) => void, 
+  setIsAuthenticated: (_: boolean) => void;
   user: User | undefined;
-  setUser: (_: User) => void
+  setUser: (_: User) => void;
 }
 
 const AuthContext = createContext<AuthData>({
   isLoading: false,
   isAuthenticated: false,
-  setIsAuthenticated: (_: boolean) => {}, 
+  setIsAuthenticated: (_: boolean) => {},
   user: {} as User,
-  setUser: (_: User) => {}
+  setUser: (_: User) => {},
 });
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | undefined>();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const getUser = async () => {
-    setIsLoading(true);
     try {
       const data = await HttpGet("/auth/me");
       setUser({
@@ -50,7 +49,9 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, isAuthenticated, setIsAuthenticated, isLoading }}>
+    <AuthContext.Provider
+      value={{ user, setUser, isAuthenticated, setIsAuthenticated, isLoading }}
+    >
       {children}
     </AuthContext.Provider>
   );
