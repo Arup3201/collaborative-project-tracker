@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +44,8 @@ interface NewProjectData {
 }
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate()
+
   const [projects, setProjects] = useState<Project[]>([]);
   const getProjects = async () => {
     try {
@@ -234,6 +237,7 @@ const Dashboard: React.FC = () => {
               <Card
                 key={project.id}
                 className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => navigate(`/projects/${project.id}`)}
               >
                 <CardHeader>
                   <div className="flex justify-between items-start">
