@@ -21,33 +21,19 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Calendar,
-  Plus,
-  CheckCircle,
-} from "lucide-react";
+import { Calendar, Plus, CheckCircle, Loader2 } from "lucide-react";
 
 import { HttpGet, HttpPost } from "@/utils/http";
 
-interface Project {
-  id: string;
-  name: string;
-  description: string;
-  deadline: string;
-  code: string;
-}
-
-interface NewProjectData {
-  name: string;
-  description: string;
-  deadline: string;
-}
+import type { Project, NewProjectData } from "@/types/project";
 
 const Dashboard: React.FC = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
+  const [isLoading, setIsLoading] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const getProjects = async () => {
+    setIsLoading(true);
     try {
       const data = await HttpGet("/projects/");
       setProjects(() =>
@@ -59,7 +45,11 @@ const Dashboard: React.FC = () => {
           code: project.code,
         }))
       );
-    } catch (err) {}
+    } catch (err) {
+      console.error(`getProjects failed: ${err}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
   useEffect(() => {
     getProjects();
@@ -91,13 +81,13 @@ const Dashboard: React.FC = () => {
     setIsJoining(true);
 
     try {
-      const data = await HttpPost(`/projects/join/code/${joinCode}`, {})
+      const data = await HttpPost(`/projects/join/code/${joinCode}`, {});
 
       console.log("Joining project with code:", joinCode);
       setJoinSuccess(`Successfully joined the project ${data.project.name}!`);
       setJoinCode("");
 
-      await getProjects()
+      await getProjects();
     } catch (err) {
       setJoinError("Invalid project code. Please check and try again.");
     } finally {
@@ -131,20 +121,23 @@ const Dashboard: React.FC = () => {
 
     try {
       const data = await HttpPost("/projects/", {
-        name: newProject.name, 
-        description: newProject.description, 
-        deadline: newProject.deadline
-      })
+        name: newProject.name,
+        description: newProject.description,
+        deadline: newProject.deadline,
+      });
 
       console.log("Creating project:", newProject);
 
-      setProjects((prev) => [...prev, {
-        id: data.project.id, 
-        name: data.project.name, 
-        description: data.project.description, 
-        deadline: data.project.deadline, 
-        code: data.project.code,
-      }]);
+      setProjects((prev) => [
+        ...prev,
+        {
+          id: data.project.id,
+          name: data.project.name,
+          description: data.project.description,
+          deadline: data.project.deadline,
+          code: data.project.code,
+        },
+      ]);
 
       // Reset form and close dialog
       setNewProject({ name: "", description: "", deadline: "" });
@@ -224,7 +217,7 @@ const Dashboard: React.FC = () => {
           </h2>
 
           {projects.length === 0 ? (
-            <Card>
+            isLoading ? <Loader2 className="spin" /> : <Card>
               <CardContent className="py-12 text-center">
                 <p className="mb-4 text-stone-500">No projects found</p>
                 <p className="text-stone-400 text-sm">
