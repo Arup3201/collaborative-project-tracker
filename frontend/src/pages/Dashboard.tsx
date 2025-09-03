@@ -216,57 +216,62 @@ const Dashboard: React.FC = () => {
             Your Projects
           </h2>
 
-          {projects.length === 0 ? (
-            isLoading ? (
-              <Loader2 className="mx-auto mt-2 animate-spin" size={24} />
+          <div className="gap-2 grid grid-cols-2">
+            {projects.length === 0 ? (
+              isLoading ? (
+                <Loader2 className="mx-auto mt-2 animate-spin" size={24} />
+              ) : (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <p className="mb-4 text-stone-500">No projects found</p>
+                    <p className="text-stone-400 text-sm">
+                      Create a new project or join an existing one to get
+                      started
+                    </p>
+                  </CardContent>
+                </Card>
+              )
             ) : (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="mb-4 text-stone-500">No projects found</p>
-                  <p className="text-stone-400 text-sm">
-                    Create a new project or join an existing one to get started
-                  </p>
-                </CardContent>
-              </Card>
-            )
-          ) : (
-            projects.map((project) => (
-              <Card
-                key={project.id}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => navigate(`/projects/${project.id}`)}
-              >
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle className="text-stone-900 text-lg">
-                        {project.name}
-                      </CardTitle>
-                      <CardDescription className="mt-1">
-                        {project.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center text-stone-600 text-sm">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>Due {formatDate(project.deadline)}</span>
+              projects.map((project) => (
+                <Card key={project.id}>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <CardTitle className="flex justify-between text-stone-900 text-lg">
+                          <h2
+                            onClick={() => navigate(`/projects/${project.id}`)}
+                            className="inline-block hover:text-blue-500 hover:underline cursor-pointer"
+                          >
+                            {project.name}
+                          </h2>
+                          <span className="inline-block px-2 py-1 border border-blue-200 rounded-sm text-blue-500 text-sm">{project.code}</span>
+                        </CardTitle>
+                        <CardDescription className="mt-1">
+                          {project.description}
+                        </CardDescription>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center text-stone-600 text-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>Due {formatDate(project.deadline)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
 
           {/* Create New Project Button */}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Card className="hover:shadow-md border-2 border-stone-300 border-dashed transition-shadow cursor-pointer">
-                <CardContent className="flex justify-center items-center py-12">
+                <CardContent className="flex justify-center items-center py-4">
                   <div className="text-center">
                     <Plus className="mx-auto mb-2 w-8 h-8 text-stone-400" />
                     <p className="font-medium text-stone-600">
