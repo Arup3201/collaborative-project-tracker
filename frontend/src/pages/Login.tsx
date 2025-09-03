@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { Button } from "@/components/ui/button";
@@ -27,9 +27,11 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, setAuth } = useAuth();
 
-  if (isAuthenticated) {
-    navigate("/projects");
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/")
+    }
+  }, [isAuthenticated])
 
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -74,6 +76,7 @@ const Login: React.FC = () => {
         password: formData.password,
       });
       setAuth(response.data, true)
+      navigate("/")
     } catch (err) {
       setError("Invalid email or password. Please try again.");
     } finally {

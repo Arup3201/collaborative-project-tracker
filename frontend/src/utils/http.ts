@@ -1,4 +1,4 @@
-const URL_ROOT = window.location + "/api/v1";
+const URL_ROOT = window.location + "api/v1";
 
 const HttpGet = async (resource: string) => {
   try {
@@ -41,7 +41,7 @@ const HttpPost = async (resource: string, payload: any) => {
 const HttpPut = async (resource: string, payload: any) => {
   try {
     const response = await fetch(URL_ROOT + resource, {
-      method: "POST",
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
@@ -60,14 +60,10 @@ const HttpPut = async (resource: string, payload: any) => {
     }
   }
 };
-const HttpDelete = async (resource: string, payload: any) => {
+const HttpDelete = async (resource: string) => {
   try {
     const response = await fetch(URL_ROOT + resource, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+      method: "DELETE",
     });
 
     if (!response.ok) {
