@@ -15,6 +15,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
+import useAuth from "@/hooks/auth";
 import { HttpPost } from "@/utils/http";
 
 interface LoginFormData {
@@ -24,6 +25,11 @@ interface LoginFormData {
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, setAuth } = useAuth();
+
+  if (isAuthenticated) {
+    navigate("/projects");
+  }
 
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -64,10 +70,10 @@ const Login: React.FC = () => {
 
     try {
       const response = await HttpPost("/auth/login", {
-        "email": formData.email, 
-        "password": formData.password
-      })
-      console.log("Login data: ", response.user);
+        email: formData.email,
+        password: formData.password,
+      });
+      setAuth(response.data, true)
     } catch (err) {
       setError("Invalid email or password. Please try again.");
     } finally {
