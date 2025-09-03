@@ -232,7 +232,15 @@ class ProjectService:
                             project_id=project_id)
                 session.add(task)
                 session.commit()
-
+                return {
+                    "id": task.id, 
+                    "name": task.name, 
+                    "description": task.description, 
+                    "assignee": assignee, 
+                    "status": task.status.value, 
+                    "created_at": task.created_at.strftime("%Y-%m-%d %I:%M:%S %p"), 
+                    "project_id": project_id
+                }
         except OperationalError as e:
             print(str(e))
             raise DBOverloadError()
