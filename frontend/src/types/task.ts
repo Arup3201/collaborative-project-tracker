@@ -1,11 +1,12 @@
+import type { User } from "./user";
+
 export type TaskStatus = 'To Do' | 'In Progress' | 'Completed';
 
 export interface Task {
   id: string;
   name: string;
   description: string;
-  deadline: string;
-  assignee: string;
+  assignee: User;
   status: TaskStatus;
 }
 

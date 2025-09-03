@@ -35,15 +35,15 @@ import {
   Trash2,
   Eye,
   UserPlus,
-  Calendar,
   User,
   Clock,
   CheckCircle2,
   Circle,
   MoreHorizontal,
+  Loader2,
 } from "lucide-react";
 
-import { HttpGet } from "@/utils/http";
+import { HttpGet, HttpPost } from "@/utils/http";
 
 import type { Project as ProjectType } from "@/types/project";
 import type { Task, TeamMember, NewTaskData, TaskStatus } from "@/types/task";
@@ -125,22 +125,29 @@ const Project: React.FC = () => {
     setIsCreating(true);
 
     try {
-      // TODO: Replace with your actual create task API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const data = await HttpPost(`/projects/${project_id}/tasks/`, {
+        name: newTask.name,
+        description: newTask.description,
+        assignee: newTask.assignee,
+        status: newTask.status,
+      });
 
       console.log("Creating task:", newTask);
 
-      // Add new task to the list
-      const createdTask: Task = {
-        id: Date.now().toString(),
-        name: newTask.name,
-        description: newTask.description,
-        deadline: newTask.deadline,
-        assignee: newTask.assignee,
-        status: newTask.status,
-      };
-
-      setTasks((prev) => [...prev, createdTask]);
+      setTasks((prev) => [
+        ...prev,
+        {
+          id: data.task.id,
+          name: data.task.name,
+          description: data.task.description,
+          assignee: {
+            id: data.task.assignee,
+            name: data.task.assignee_name,
+            email: data.task.assignee_email,
+          },
+          status: data.task.status,
+        },
+      ]);
 
       // Reset form and close dialog
       setNewTask({
@@ -215,21 +222,6 @@ const Project: React.FC = () => {
     );
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const isOverdue = (deadline: string, status: TaskStatus) => {
-    const deadlineDate = new Date(deadline);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return deadlineDate < today && status !== "Completed";
-  };
-
   // TanStack Table setup
   const columnHelper = createColumnHelper<Task>();
 
@@ -247,29 +239,12 @@ const Project: React.FC = () => {
           </span>
         ),
       }),
-      columnHelper.accessor("deadline", {
-        header: "Deadline",
-        cell: (info) => (
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-stone-400" />
-            <span
-              className={
-                isOverdue(info.getValue(), info.row.original.status)
-                  ? "text-red-600 font-medium"
-                  : ""
-              }
-            >
-              {formatDate(info.getValue())}
-            </span>
-          </div>
-        ),
-      }),
       columnHelper.accessor("assignee", {
         header: "Assignee",
         cell: (info) => (
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-stone-400" />
-            {info.getValue()}
+            {info.getValue().name}
           </div>
         ),
       }),
@@ -515,12 +490,16 @@ const Project: React.FC = () => {
 
           <CardContent>
             {tasks.length === 0 ? (
-              <div className="py-12 text-center">
-                <p className="mb-4 text-stone-500">No tasks found</p>
-                <p className="text-stone-400 text-sm">
-                  Create a new task to get started
-                </p>
-              </div>
+              isLoading ? (
+                <Loader2 className="mx-auto mt-2 animate-spin" size={24} />
+              ) : (
+                <div className="py-12 text-center">
+                  <p className="mb-4 text-stone-500">No tasks found</p>
+                  <p className="text-stone-400 text-sm">
+                    Create a new task to get started
+                  </p>
+                </div>
+              )
             ) : (
               <div className="border rounded-md">
                 <table className="w-full text-sm caption-bottom">

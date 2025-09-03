@@ -1,31 +1,26 @@
 import { createContext, useEffect, useState } from "react";
 
 import { HttpGet } from "@/utils/http";
-
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-}
+import type { User } from "@/types/user";
 
 interface AuthData {
   isLoading: boolean;
   isAuthenticated: boolean;
   setIsAuthenticated: (_: boolean) => void, 
-  user: UserData | undefined;
-  setUser: (_: UserData) => void
+  user: User | undefined;
+  setUser: (_: User) => void
 }
 
 const AuthContext = createContext<AuthData>({
   isLoading: false,
   isAuthenticated: false,
   setIsAuthenticated: (_: boolean) => {}, 
-  user: {} as UserData,
-  setUser: (_: UserData) => {}
+  user: {} as User,
+  setUser: (_: User) => {}
 });
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<UserData | undefined>();
+  const [user, setUser] = useState<User | undefined>();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 

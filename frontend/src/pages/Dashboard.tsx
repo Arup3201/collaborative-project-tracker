@@ -217,14 +217,18 @@ const Dashboard: React.FC = () => {
           </h2>
 
           {projects.length === 0 ? (
-            isLoading ? <Loader2 className="spin" /> : <Card>
-              <CardContent className="py-12 text-center">
-                <p className="mb-4 text-stone-500">No projects found</p>
-                <p className="text-stone-400 text-sm">
-                  Create a new project or join an existing one to get started
-                </p>
-              </CardContent>
-            </Card>
+            isLoading ? (
+              <Loader2 className="mx-auto mt-2 animate-spin" size={24} />
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="mb-4 text-stone-500">No projects found</p>
+                  <p className="text-stone-400 text-sm">
+                    Create a new project or join an existing one to get started
+                  </p>
+                </CardContent>
+              </Card>
+            )
           ) : (
             projects.map((project) => (
               <Card
