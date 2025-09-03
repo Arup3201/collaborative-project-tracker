@@ -41,7 +41,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-import { HttpGet, HttpPost } from "@/utils/http";
+import { HttpGet, HttpPost, HttpPut } from "@/utils/http";
 import useAuth from "@/hooks/auth";
 
 import type { ProjectRole, Project as ProjectType } from "@/types/project";
@@ -120,10 +120,20 @@ const Project: React.FC = () => {
     assignee: "",
     status: "To Do",
   });
+  const [editTask, setEditTask] = useState<NewTaskData>({
+    name: "",
+    description: "",
+    assignee: "",
+    status: "To Do",
+  });
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [createError, setCreateError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+
+  const [editingDialogOpen, setEditingDialogOpen] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleCreateTask = async () => {
     setCreateError("");
@@ -189,10 +199,54 @@ const Project: React.FC = () => {
     }
   };
 
-  const handleEditTask = (taskId: string) => {
-    // TODO: Implement edit task functionality
-    console.log("Edit task:", taskId);
+  const openEditTaskModal = (taskId: string) => {
+    setEditingDialogOpen(true);
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    setEditTask({
+      name: task.name,
+      description: task.description,
+      status: task.status,
+      assignee: task.assignee.id,
+    });
   };
+
+  const handleEditTask = async () => {
+    setEditError("");
+
+    if (
+      !editTask.name.trim() ||
+      !editTask.description.trim() ||
+      !editTask.assignee
+    ) {
+      setEditError("All fields are required");
+      return;
+    }
+
+    setIsEditing(true);
+
+    try {
+      const data = await HttpPut(`/projects/${project_id}/tasks/`, {
+        name: editTask.name,
+        description: editTask.description,
+      });
+
+      console.log("Creating task:", editTask);
+
+      // Reset form and close dialog
+      setEditTask({
+        name: "",
+        description: "",
+        assignee: "",
+        status: "To Do",
+      });
+      setEditingDialogOpen(false);
+    } catch (err) {
+      setEditError("Failed to create task. Please try again.");
+    } finally {
+      setIsEditing(false);
+    }
+  }
 
   const handleViewTask = (taskId: string) => {
     // TODO: Implement view task details functionality
@@ -271,25 +325,141 @@ const Project: React.FC = () => {
       cell: (info) => (
         <div className="flex justify-center gap-1">
           <Button
-            variant="ghost"
-            onClick={() => {
-              if (
-                projectRole !== "Owner" &&
-                user?.id !== info.row.original.assignee.id
-              ) {
-                // user is not the owner or the assignee
-                return;
-              }
-              handleEditTask(info.row.original.id);
-            }}
-            disabled={
-              projectRole !== "Owner" &&
-              user?.id !== info.row.original.assignee.id
-            }
-            className="cursor-pointer"
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
+                variant="ghost"
+                onClick={() => {
+                  if (
+                    projectRole !== "Owner" &&
+                    user?.id !== info.row.original.assignee.id
+                  ) {
+                    // user is not the owner or the assignee
+                    return;
+                  }
+                  openEditTaskModal(info.row.original.id);
+                }}
+                disabled={
+                  projectRole !== "Owner" &&
+                  user?.id !== info.row.original.assignee.id
+                }
+                className="cursor-pointer"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+          <Dialog open={editingDialogOpen} onOpenChange={setEditingDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Task</DialogTitle>
+                <DialogDescription>
+                  Fill in the details below to edit this task
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                {editError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{editError}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="taskName">Task Name</Label>
+                  <Input
+                    id="taskName"
+                    placeholder="Enter task name"
+                    value={editTask.name}
+                    onChange={(e) =>
+                      setEditTask((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    disabled={isEditing}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="taskDescription">Description</Label>
+                  <Textarea
+                    id="taskDescription"
+                    placeholder="Enter task description"
+                    value={editTask.description}
+                    onChange={(e) =>
+                      setEditTask((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                    disabled={isEditing}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="taskAssignee">Assignee</Label>
+                  <Select
+                    value={editTask.assignee}
+                    onValueChange={(value) =>
+                      setEditTask((prev) => ({ ...prev, assignee: value }))
+                    }
+                    disabled={isEditing}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select assignee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {teamMembers.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            {member.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="taskStatus">Status</Label>
+                  <Select
+                    value={editTask.status}
+                    onValueChange={(value: TaskStatus) =>
+                      setEditTask((prev) => ({ ...prev, status: value }))
+                    }
+                    disabled={isEditing}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="To Do">To Do</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Done">Done</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <DialogFooter className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  disabled={isEditing}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleEditTask}
+                  disabled={
+                    isEditing ||
+                    projectRole !== "Owner" ||
+                    user?.id !== editTask.assignee
+                  }
+                >
+                  {isEditing ? "Editing..." : "Edit Task"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Button
             variant="ghost"
             onClick={() => {
