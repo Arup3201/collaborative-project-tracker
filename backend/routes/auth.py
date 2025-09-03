@@ -4,6 +4,7 @@ import pydantic
 from services.auth import AuthService
 from utils.token import generate_token, TOKEN_NAME, TOKEN_EXIRES
 from validation.payload import UserCreatePayload, UserLoginPayload
+from validation.user import User
 from exceptions import BadPayloadError, DBOverloadError, NotFoundError, AlreadyExistError
 from exceptions.auth import IncorrectPasswordError, JWTError
 
@@ -153,5 +154,34 @@ def login():
             "code": "SERVER_FAILURE"
         }), 500
 
+def getMe():
+    try:
+        user_payload = User(**request.environ["user"])
+    except pydantic.ValidationError as e:
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "message": err["msg"], 
+                "input": err["input"], 
+                "loc": err["loc"]
+            })
+        print(errors)
+        return jsonify({
+            "error": {
+                "message": "Invalid user data",
+                "details": "User data saved at server is corrupted",  
+                "code": "SERVER_FAILURE"
+            }
+        }), 500
+    
+    return jsonify({
+        "user": {
+            "id": user_payload.id, 
+            "name": user_payload.name, 
+            "email": user_payload.email
+        }
+    })
+
 auth_blueprint.add_url_rule("/register", endpoint="register", view_func=register, methods=['POST'])
 auth_blueprint.add_url_rule("/login", endpoint="login", view_func=login, methods=['POST'])
+auth_blueprint.add_url_rule("/me", endpoint="get-me", view_func=getMe, methods=['GET'])
