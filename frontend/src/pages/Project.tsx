@@ -459,7 +459,10 @@ const Project: React.FC = () => {
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateTask} disabled={isCreating}>
+                  <Button
+                    onClick={handleCreateTask}
+                    disabled={isCreating || projectRole !== "Owner"}
+                  >
                     {isCreating ? "Creating..." : "Create Task"}
                   </Button>
                 </DialogFooter>
