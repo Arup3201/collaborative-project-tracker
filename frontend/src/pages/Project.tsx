@@ -55,7 +55,7 @@ const Project: React.FC = () => {
 
   const [project, setProject] = useState<ProjectType>({} as ProjectType);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [teamMembers] = useState<TeamMember[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   const getProject = async (projectId: string) => {
     setIsLoading(true);
@@ -71,16 +71,32 @@ const Project: React.FC = () => {
       setIsLoading(false);
     }
   };
+  const getMembers = async (projectId: string) => {
+    try {
+      const data = await HttpGet(`/projects/${projectId}/members`);
+      setTeamMembers(() =>
+        data.members.map((member) => ({
+          id: member.user_id,
+          email: member.email,
+          name: member.name,
+          joinedAt: member.joined_at,
+          role: member.role,
+        }))
+      );
+    } catch (err) {
+      console.error(`getMembers failed: ${err}`);
+    }
+  };
   useEffect(() => {
     if (project_id) {
       getProject(project_id);
+      getMembers(project_id);
     }
   }, [project_id]);
 
   const [newTask, setNewTask] = useState<NewTaskData>({
     name: "",
     description: "",
-    deadline: "",
     assignee: "",
     status: "To Do",
   });
@@ -105,20 +121,9 @@ const Project: React.FC = () => {
     if (
       !newTask.name.trim() ||
       !newTask.description.trim() ||
-      !newTask.deadline ||
       !newTask.assignee
     ) {
       setCreateError("All fields are required");
-      return;
-    }
-
-    // Check if deadline is in the future
-    const selectedDate = new Date(newTask.deadline);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (selectedDate < today) {
-      setCreateError("Deadline must be in the future");
       return;
     }
 
@@ -153,7 +158,6 @@ const Project: React.FC = () => {
       setNewTask({
         name: "",
         description: "",
-        deadline: "",
         assignee: "",
         status: "To Do",
       });
@@ -411,22 +415,6 @@ const Project: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="taskDeadline">Deadline</Label>
-                    <Input
-                      id="taskDeadline"
-                      type="date"
-                      value={newTask.deadline}
-                      onChange={(e) =>
-                        setNewTask((prev) => ({
-                          ...prev,
-                          deadline: e.target.value,
-                        }))
-                      }
-                      disabled={isCreating}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
                     <Label htmlFor="taskAssignee">Assignee</Label>
                     <Select
                       value={newTask.assignee}
@@ -440,7 +428,7 @@ const Project: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {teamMembers.map((member) => (
-                          <SelectItem key={member.id} value={member.name}>
+                          <SelectItem key={member.id} value={member.id}>
                             <div className="flex items-center gap-2">
                               <User className="w-4 h-4" />
                               {member.name}

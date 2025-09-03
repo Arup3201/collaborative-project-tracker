@@ -13,7 +13,6 @@ export interface Task {
 export interface NewTaskData {
   name: string;
   description: string;
-  deadline: string;
   assignee: string;
   status: TaskStatus;
 }
@@ -22,4 +21,6 @@ export interface TeamMember {
   id: string;
   name: string;
   email: string;
+  role: "Owner" | "Member";
+  joinedAt: string;
 }
